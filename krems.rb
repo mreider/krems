@@ -38,7 +38,9 @@ end
 def load_base_url(local = false, port = 4567)
   if local
     "http://127.0.0.1:#{port}/"
-  elsif ENV['GITHUB_ACTIONS'] || File.exist?(CONFIG_FILE)
+  elsif ENV['GITHUB_ACTIONS']
+    "https://mreider.github.io/krems/"
+  elsif File.exist?(CONFIG_FILE)
     url = TomlRB.load_file(CONFIG_FILE)['url'] rescue "/"
     url.end_with?("/") ? url : "#{url}/"
   else
@@ -106,16 +108,18 @@ def convert_links_to_html(content, base_url)
 end
 
 def update_image_links(content, base_url)
-  # Ensure base URL ends with a single slash
   normalized_base = normalize_url(base_url)
+  puts "Applying base URL: #{normalized_base}" # Debugging output
 
   content.gsub(/!\[([^\]]*)\]\((\/?images\/[^\)]+)\)/) do
     alt_text, image_path = $1, $2
-    # Ensure no double slashes by stripping the leading slash from image_path
     normalized_path = image_path.sub(%r{^/}, "")
-    "![#{alt_text}](#{normalized_base}#{normalized_path})"
+    result = "![#{alt_text}](#{normalized_base}#{normalized_path})"
+    puts "Updated image link: #{result}" # Debugging output
+    result
   end
 end
+
 
 
 
@@ -213,6 +217,7 @@ def generate_footer(base_url)
 end
 
 def convert_markdown_to_html(base_url)
+  puts "Base URL used for generation: #{base_url}" # Debugging output
   defaults = load_defaults
   renderer = Redcarpet::Render::HTML.new
   markdown = Redcarpet::Markdown.new(renderer, tables: true, autolink: true, fenced_code_blocks: true)
@@ -226,8 +231,10 @@ def convert_markdown_to_html(base_url)
     md_content = File.read(file)
     front_matter, body_content = parse_front_matter(md_content, defaults)
     body_content = markdown.render(body_content)
-    body_content = update_image_links(body_content, base_url) # Fix image links
-    body_content = convert_links_to_html(body_content, base_url) # Fix internal links
+
+    # Apply link and image updates
+    body_content = update_image_links(body_content, base_url)
+    body_content = convert_links_to_html(body_content, base_url)
     body_content = replace_custom_handlebars(body_content, base_url)
 
     menu = generate_menu(front_matter, base_url)
@@ -258,6 +265,7 @@ def convert_markdown_to_html(base_url)
   end
   puts "Markdown to HTML conversion complete."
 end
+
 
 def generate_site(base_url)
   clean_published_directory
