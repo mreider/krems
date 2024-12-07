@@ -142,12 +142,15 @@ def generate_meta_tags(front_matter, base_url)
   tags << "<meta property=\"og:author\" content=\"#{front_matter['author']}\" />" if front_matter['author']
   tags << "<meta property=\"og:description\" content=\"#{front_matter['summary']}\" />" if front_matter['summary']
   if front_matter['image']
-    normalized_image = front_matter['image'].sub(%r{^/}, "")
-    tags << "<meta property=\"og:image\" content=\"#{base_url}#{normalized_image}\" />"
+    # Ensure the image path is relative to the base URL
+    normalized_base = normalize_url(base_url)
+    normalized_image = front_matter['image'].sub(%r{^/}, "") # Remove leading slash if present
+    tags << "<meta property=\"og:image\" content=\"#{normalized_base}#{normalized_image}\" />"
   end
   tags << "<meta property=\"og:date\" content=\"#{front_matter['date']}\" />" if front_matter['date']
   tags.join("\n")
 end
+
 
 def generate_static_asset_links(base_url)
   normalized_base = normalize_url(base_url)
@@ -242,7 +245,22 @@ def convert_markdown_to_html(base_url)
     static_assets = generate_static_asset_links(base_url)
     footer = generate_footer(base_url)
 
-    header_content = front_matter['title'] ? "<h1>#{front_matter['title']}</h1>" : ""
+    header_content = ""
+    header_content << "<h1>#{front_matter['title']}</h1>" if front_matter['title']
+    if front_matter['author'] && front_matter['date']
+      formatted_date = Date.parse(front_matter['date']).strftime("%B %d, %Y")
+      header_content << "<h2>By #{front_matter['author']} on #{formatted_date}</h2>"
+    end
+    header_content << "<h3>#{front_matter['summary']}</h3>" if front_matter['summary']
+
+    # Normalize the base URL for the image in the front matter
+    if front_matter["image"]
+      normalized_base = normalize_url(base_url)
+      normalized_image = front_matter["image"].sub(%r{^/}, "") # Remove leading slash if present
+      header_content << <<~HTML
+        <img src="#{normalized_base}#{normalized_image}" alt="#{front_matter['title']}">
+      HTML
+    end
 
     File.write(output_file, <<~HTML)
       <!DOCTYPE html>
