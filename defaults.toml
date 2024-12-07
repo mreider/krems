@@ -1,0 +1,5 @@
+menu = [
+  { name = "Home", path = "index.md" },
+  { name = "WritingForFun", path = "fun/index.md" },
+  { name = "AboutMe", path = "about.md" }
+]
