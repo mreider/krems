@@ -95,25 +95,28 @@ def parse_front_matter(content, defaults)
 end
 
 def convert_links_to_html(content, base_url)
+  normalized_base = normalize_url(base_url)
+
   content.gsub(/href="(\/?[a-zA-Z0-9\-_\/\.]+)\.md"/) do
     link = $1
+    # Ensure no double slashes by stripping leading slash
     absolute_path = link.start_with?("/") ? link[1..] : link
-    "href=\"#{base_url}#{absolute_path}.html\""
+    "href=\"#{normalized_base}#{absolute_path}.html\""
   end
 end
 
 def update_image_links(content, base_url)
-  # Normalize base URL to ensure it ends with a single slash
-  normalized_base = base_url.end_with?("/") ? base_url : "#{base_url}/"
+  # Ensure base URL ends with a single slash
+  normalized_base = normalize_url(base_url)
 
   content.gsub(/!\[([^\]]*)\]\((\/?images\/[^\)]+)\)/) do
     alt_text, image_path = $1, $2
-    # Remove leading slash from image path if present
+    # Ensure no double slashes by stripping the leading slash from image_path
     normalized_path = image_path.sub(%r{^/}, "")
-    # Concatenate the normalized base URL and the relative image path
     "![#{alt_text}](#{normalized_base}#{normalized_path})"
   end
 end
+
 
 
 
@@ -143,14 +146,16 @@ def generate_meta_tags(front_matter, base_url)
 end
 
 def generate_static_asset_links(base_url)
+  normalized_base = normalize_url(base_url)
   css_file = load_css_file
+
   <<~HTML
-    <link rel="stylesheet" href="#{base_url}css/#{css_file}">
-    <link rel="apple-touch-icon" sizes="180x180" href="#{base_url}images/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="#{base_url}images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="#{base_url}images/favicon-16x16.png">
-    <link rel="manifest" href="#{base_url}images/site.webmanifest">
-    <link rel="icon" href="#{base_url}images/favicon.ico">
+    <link rel="stylesheet" href="#{normalized_base}css/#{css_file}">
+    <link rel="apple-touch-icon" sizes="180x180" href="#{normalized_base}images/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="#{normalized_base}images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="#{normalized_base}images/favicon-16x16.png">
+    <link rel="manifest" href="#{normalized_base}images/site.webmanifest">
+    <link rel="icon" href="#{normalized_base}images/favicon.ico">
     <meta name="theme-color" content="#ffffff">
   HTML
 end
@@ -221,8 +226,8 @@ def convert_markdown_to_html(base_url)
     md_content = File.read(file)
     front_matter, body_content = parse_front_matter(md_content, defaults)
     body_content = markdown.render(body_content)
-    body_content = update_image_links(body_content, base_url)
-    body_content = convert_links_to_html(body_content, base_url)
+    body_content = update_image_links(body_content, base_url) # Fix image links
+    body_content = convert_links_to_html(body_content, base_url) # Fix internal links
     body_content = replace_custom_handlebars(body_content, base_url)
 
     menu = generate_menu(front_matter, base_url)
