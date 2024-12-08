@@ -1,41 +1,62 @@
-name: Deploy to GitHub Pages
+name: Build and Deploy Krems Site to GitHub Pages
 
 on:
   push:
     branches:
-      - main
+      - main 
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 3.3.6
-        bundler-cache: true
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v2
 
-    - name: Debug Ruby environment
-      run: gem list
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.1
 
-    - name: Install dependencies
-      run: bundle install --jobs 4 --retry 3
+      - name: Install Dependencies
+        run: bundle install
 
-    - name: Build site
-      run: |
-        set -x
-        bundle exec ruby krems.rb --build
+      - name: Build Krems Site
+        env:
+          BASE_URL: ${{ steps.pages.outputs.base_url }}
+        run: ruby krems.rb --build
 
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: published
-        enable_jekyll: false
+      - name: Upload Krems Artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ./published
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
