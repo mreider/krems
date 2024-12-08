@@ -1,0 +1,19 @@
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  margin: 0;
+  padding: 20px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #333;
+}
+
+a {
+  color: #3973ad;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #4183C4;
+}

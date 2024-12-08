@@ -1,0 +1,7 @@
+title = "Default Title"
+author = "Default Author"
+summary = "This is a default summary."
+menu = [
+  { path = "/index.md", name = "Home" },
+  { path = "/example/post1.md", name = "First Post" }
+]
