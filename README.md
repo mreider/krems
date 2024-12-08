@@ -48,38 +48,68 @@ To deploy your site to GitHub Pages, you can use the following workflow file. Th
 #### `.github/workflows/pages.yml`
 
 ```yaml
-name: Deploy to GitHub Pages
+name: Build and Deploy Krems Site to GitHub Pages
 
 on:
   push:
     branches:
-      - main
+      - main 
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
-    - name: Setup Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: 3.1
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v2
 
-    - name: Install dependencies
-      run: bundle install
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.1
 
-    - name: Build the site
-      run: ruby krems.rb --build
+      - name: Install Dependencies
+        run: bundle install
 
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: published
-        jekyll: false # Disable Jekyll processing
+      - name: Build Krems Site
+        env:
+          BASE_URL: ${{ steps.pages.outputs.base_url }}
+        run: ruby krems.rb --build
+
+      - name: Upload Krems Artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: ./published
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
 ```
 
 **Important Notes:**
