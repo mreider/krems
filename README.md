@@ -12,30 +12,32 @@ For an example of a complete site built with Krems, check out the repository [ht
 ### Getting Started
 
 1. **Download and Setup:**
+
+ **Prerequisite:** Ensure you have Ruby installed on your system.
+ 
    - Download the latest release from the [GitHub Releases page](https://github.com/mreider/krems/releases).
    - Unzip the release to a directory of your choice.
    - Open a terminal and `cd` into the directory.
 
-   **Prerequisite:** Ensure you have Ruby installed on your system.
 
-2. **Install Dependencies:**
+3. **Install Dependencies:**
    ```bash
    bundle install
    ```
 
-3. **Initialize a New Project:**
+4. **Initialize a New Project:**
    ```bash
    ruby krems.rb --init
    ```
    This creates all necessary files and directories for a simple example site.
 
-4. **Serve the Site:**
+5. **Serve the Site:**
    ```bash
    ruby krems.rb --serve
    ```
    This command builds the site and starts a local development server. Visit `http://localhost:4567` in your browser to see the site.
 
-5. **Explore the Generated Files:**
+6. **Explore the Generated Files:**
    - Look around the `markdown/`, `css/`, and other directories to see how the example site was created.
    - Check out the `index.md` file in the `markdown/` directory, which includes a post listing example.
 
@@ -111,11 +113,6 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v1
 ```
-
-**Important Notes:**
-- The `jekyll: false` option is essential to avoid GitHub Pages trying to process the static site with Jekyll.
-- This workflow builds the site and deploys the `published/` directory to the `gh-pages` branch.
-
 ---
 
 ### Directory Structure
