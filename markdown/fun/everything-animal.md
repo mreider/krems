@@ -3,9 +3,8 @@ title = "The Everything Animal"
 date = "2019-09-12"
 author = "Matt Reider"
 categories = ["writing for fun"]
+image = "/images/matt/0_cvAPXYQPV4j3iuon.jpeg"
 +++
-
-![Wunderwuzzi](/images/matt/0_cvAPXYQPV4j3iuon.jpeg)
 
 We are ahead of ourselves. We want to be here in April 2020, not September. In April 2020 the kids will take the tram by themselves. They will have strong friendships. Alison and I will understand the healthcare system, and know enough German to order a sandwich without having to point.
 

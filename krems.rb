@@ -30,19 +30,16 @@ MARKDOWN
 
 # Utility: Normalize base URL
 def normalize_url(url)
-  url = url.to_s
-  url.end_with?('/') ? url : "#{url}/"
+  url = url.to_s.strip
+  url.end_with?("/") ? url : "#{url}/"
 end
 
 # Load base URL from config.toml
-def load_base_url(local = false, port = 4567)
+def load_base_url(local = false)
   if local
-    "http://127.0.0.1:#{port}/"
-  elsif ENV['GITHUB_ACTIONS']
-    "https://mreider.github.io/krems/"
+    "http://127.0.0.1:4567/"
   elsif File.exist?(CONFIG_FILE)
-    url = TomlRB.load_file(CONFIG_FILE)['url'] rescue "/"
-    url.end_with?("/") ? url : "#{url}/"
+    normalize_url(TomlRB.load_file(CONFIG_FILE)['url'] || "/")
   else
     "/"
   end
@@ -96,27 +93,23 @@ def parse_front_matter(content, defaults)
   end
 end
 
-def convert_links_to_html(content, base_url)
-  normalized_base = normalize_url(base_url)
+def absolute_path(base_url, relative_path)
+  base_url = normalize_url(base_url)
+  relative_path = relative_path.sub(%r{^/}, "") # Remove leading slash if present
+  "#{base_url}#{relative_path}"
+end
 
+def convert_links_to_html(content, base_url)
   content.gsub(/href="(\/?[a-zA-Z0-9\-_\/\.]+)\.md"/) do
     link = $1
-    # Ensure no double slashes by stripping leading slash
-    absolute_path = link.start_with?("/") ? link[1..] : link
-    "href=\"#{normalized_base}#{absolute_path}.html\""
+    "href=\"#{absolute_path(base_url, "#{link}.html")}\""
   end
 end
 
 def update_image_links(content, base_url)
-  normalized_base = normalize_url(base_url)
-  puts "Applying base URL: #{normalized_base}" # Debugging output
-
   content.gsub(/!\[([^\]]*)\]\((\/?images\/[^\)]+)\)/) do
     alt_text, image_path = $1, $2
-    normalized_path = image_path.sub(%r{^/}, "")
-    result = "![#{alt_text}](#{normalized_base}#{normalized_path})"
-    puts "Updated image link: #{result}" # Debugging output
-    result
+    "![#{alt_text}](#{absolute_path(base_url, image_path)})"
   end
 end
 
@@ -153,17 +146,9 @@ end
 
 
 def generate_static_asset_links(base_url)
-  normalized_base = normalize_url(base_url)
-  css_file = load_css_file
-
   <<~HTML
-    <link rel="stylesheet" href="#{normalized_base}css/#{css_file}">
-    <link rel="apple-touch-icon" sizes="180x180" href="#{normalized_base}images/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="#{normalized_base}images/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="#{normalized_base}images/favicon-16x16.png">
-    <link rel="manifest" href="#{normalized_base}images/site.webmanifest">
-    <link rel="icon" href="#{normalized_base}images/favicon.ico">
-    <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="#{absolute_path(base_url, "css/#{load_css_file}")}">
+    <link rel="icon" href="#{absolute_path(base_url, "images/favicon.ico")}">
   HTML
 end
 
@@ -189,8 +174,9 @@ def generate_post_list(folder_name, base_url)
     next unless front_matter["date"]
 
     year = Date.parse(front_matter["date"]).year
-    display_name = File.basename(file, ".md").titleize
-    link_path = "#{base_url}#{folder_name}/#{File.basename(file, '.md')}.html"
+    file_name = File.basename(file, ".md")
+    display_name = file_name.gsub(/[-_]/, " ").split.map(&:capitalize).join(" ") # Convert to title case
+    link_path = absolute_path(base_url, "#{folder_name}/#{file_name}.html")
     years[year] << { name: display_name, link: link_path }
   end
 
@@ -203,6 +189,7 @@ def generate_post_list(folder_name, base_url)
     HTML
   end.join("\n")
 end
+
 
 def replace_custom_handlebars(content, base_url)
   content.gsub(/\{\{\s*list_posts\(([^)]+)\)\s*\}\}/) do
@@ -285,7 +272,8 @@ def convert_markdown_to_html(base_url)
 end
 
 
-def generate_site(base_url)
+def generate_site(local)
+  base_url = load_base_url(local)
   clean_published_directory
   ensure_index_md
   convert_markdown_to_html(base_url)
@@ -297,7 +285,7 @@ options = { mode: 'build' }
 OptionParser.new do |opts|
   opts.banner = "Usage: ruby krems.rb [options]"
 
-  opts.on("--serve", "Run in serve mode") do
+  opts.on("--serve", "Run in serve mode (local preview)") do
     options[:mode] = 'serve'
   end
 
@@ -309,20 +297,18 @@ end.parse!
 if options[:mode] == 'serve'
   require 'sinatra'
   base_url = load_base_url(true)
-  puts "Starting site generation for local testing..."
-  generate_site(base_url)
+  puts "Starting local server..."
+  generate_site(true)
 
   set :public_folder, PUBLISHED_DIR
 
-  # Watch for changes and rebuild the site
-  listen_paths = [MARKDOWN_DIR, CSS_DIR, IMAGES_DIR] # Exclude config.toml
-  listener = Listen.to(*listen_paths, only: /\.(md|css|png|jpg|jpeg|gif|svg)$/) do |modified, added, removed|
-    puts "Change detected! Files modified: #{modified.join(', ')}, added: #{added.join(', ')}, removed: #{removed.join(', ')}"
-    puts "Rebuilding site..."
-    generate_site(load_base_url(true))
-    puts "Rebuild complete. Refresh the browser to see the changes."
+  # Watch for file changes
+  listen_paths = [MARKDOWN_DIR, CSS_DIR, IMAGES_DIR]
+  listener = Listen.to(*listen_paths, only: /\.(md|css|png|jpg|jpeg|gif|svg)$/) do
+    puts "Change detected! Rebuilding site..."
+    generate_site(true)
+    puts "Rebuild complete. Refresh your browser."
   end
-
   listener.start
 
   get '/' do
@@ -331,7 +317,6 @@ if options[:mode] == 'serve'
 
   Sinatra::Application.run!
 else
-  base_url = load_base_url
-  puts "Starting site generation..."
-  generate_site(base_url)
+  puts "Building site for deployment..."
+  generate_site(false)
 end
