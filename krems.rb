@@ -261,7 +261,7 @@ end
 def generate_footer(base_url)
   <<~HTML
     <footer>
-      <h4>&copy; #{Time.now.year} Created with <a href="#{base_url}">Krems</a></h4>
+      <h4>&copy; #{Time.now.year} Created with <a href="https://github.com/mreider/krems">Krems</a></h4>
     </footer>
   HTML
 end
