@@ -5,6 +5,8 @@ Krems is a simple Ruby-based static site generator designed to convert Markdown 
 
 I love Hugo, Hexo, Jekyll, Astro, and other static site generators, but I wanted something much simpler—something that would support a classless stylesheet, work with standard Markdown export libraries like Redcarpet, and avoid any magic. Krems gives you total control without unnecessary complexity.
 
+For an example of a complete site built with Krems, check out the repository [mreider/mreider.com](https://github.com/mreider/mreider.com) or visit the live site at [mreider.com](https://mreider.com)
+
 ---
 
 ### Getting Started
@@ -142,5 +144,3 @@ When you initialize a new project, Krems generates the following structure:
 ### Support and Questions
 
 If you have any questions, feel free to open an issue in the [GitHub Issues](https://github.com/mreider/krems/issues) section of the repository.
-
-For an example of a complete site built with Krems, check out the repository [mreider/mreider.com](https://github.com/mreider/mreider.com) or visit the live site at [mreider.com](https://mreider.com).
