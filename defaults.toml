@@ -1,5 +1,8 @@
+title = "Default Title"
+author = "Default Author"
+summary = "This is a default summary."
+
 menu = [
-  { name = "Home", path = "index.md" },
-  { name = "WritingForFun", path = "fun/index.md" },
-  { name = "AboutMe", path = "about.md" }
+  { path = "/index.md", name = "Home" },
+  { path = "/example/post1.md", name = "First Post" }
 ]

@@ -1,6 +1,7 @@
 +++
-menu = []
-title = "My little corner of the Internet"
+title = "Welcome to Krems"
 +++
 
-- [Writing for Fun](/fun/index.md)
+This is the default index page. Below is a list of posts in the 'example' directory:
+
+{{ list_posts(example) }}

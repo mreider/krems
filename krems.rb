@@ -34,6 +34,109 @@ def normalize_url(url)
   url.end_with?("/") ? url : "#{url}/"
 end
 
+def initialize_project
+  puts "Initializing new Krems project..."
+
+  # Create necessary directories
+  [MARKDOWN_DIR, CSS_DIR, IMAGES_DIR, PUBLISHED_DIR].each do |dir|
+    FileUtils.mkdir_p(dir)
+    puts "Created directory: #{dir}"
+  end
+
+  # Create default config.toml
+  config_content = <<~TOML
+    url = "http://127.0.0.1:4567/"
+    css = "styles.css"
+  TOML
+  File.write(CONFIG_FILE, config_content)
+  puts "Created file: #{CONFIG_FILE}"
+
+  # Create default defaults.toml
+  defaults_content = <<~TOML
+  title = "Default Title"
+  author = "Default Author"
+  summary = "This is a default summary."
+
+  menu = [
+    { path = "/index.md", name = "Home" },
+    { path = "/example/post1.md", name = "First Post" }
+  ]
+TOML
+File.write("defaults.toml", defaults_content)
+puts "Created file: defaults.toml"
+
+  # Create a simple example index.md
+  index_content = <<~MARKDOWN
+  +++
+  title = "Welcome to Krems"
+  +++
+
+  This is the default index page. Below is a list of posts in the 'example' directory:
+
+  {{ list_posts(example) }}
+MARKDOWN
+File.write(File.join(MARKDOWN_DIR, "index.md"), index_content)
+puts "Created file: markdown/index.md"
+
+# Create an example directory with two posts
+example_dir = File.join(MARKDOWN_DIR, "example")
+FileUtils.mkdir_p(example_dir)
+puts "Created directory: markdown/example"
+
+example_post_1 = <<~MARKDOWN
+  +++
+  title = "First Example Post"
+  author = "Krems"
+  date = "#{Time.now.strftime('%Y-%m-%d')}"
+  summary = "This is the first example post."
+  +++
+
+  This is the content of the first example post.
+MARKDOWN
+File.write(File.join(example_dir, "post1.md"), example_post_1)
+puts "Created file: markdown/example/post1.md"
+
+example_post_2 = <<~MARKDOWN
+  +++
+  title = "Second Example Post"
+  author = "Krems"
+  date = "#{(Time.now - 86400).strftime('%Y-%m-%d')}" # One day earlier
+  summary = "This is the second example post."
+  +++
+
+  This is the content of the second example post.
+MARKDOWN
+File.write(File.join(example_dir, "post2.md"), example_post_2)
+puts "Created file: markdown/example/post2.md"
+
+  # Create default CSS file
+  default_css_content = <<~CSS
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      line-height: 1.5;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      color: #333;
+    }
+
+    a {
+      color: #3973ad;
+      text-decoration: none;
+    }
+
+    a:hover {
+      color: #4183C4;
+    }
+  CSS
+  File.write(File.join(CSS_DIR, "styles.css"), default_css_content)
+  puts "Created file: css/styles.css"
+
+  puts "Krems project initialized successfully."
+end
+
 # Load base URL from config.toml
 def load_base_url(local = false)
   if local
@@ -281,9 +384,14 @@ def generate_site(local)
   puts "Site generation complete."
 end
 
+# Main script logic
 options = { mode: 'build' }
 OptionParser.new do |opts|
   opts.banner = "Usage: ruby krems.rb [options]"
+
+  opts.on("--init", "Initialize a new Krems project") do
+    options[:mode] = 'init'
+  end
 
   opts.on("--serve", "Run in serve mode (local preview)") do
     options[:mode] = 'serve'
@@ -294,7 +402,10 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-if options[:mode] == 'serve'
+case options[:mode]
+when 'init'
+  initialize_project
+when 'serve'
   require 'sinatra'
   base_url = load_base_url(true)
   puts "Starting local server..."
@@ -302,7 +413,6 @@ if options[:mode] == 'serve'
 
   set :public_folder, PUBLISHED_DIR
 
-  # Watch for file changes
   listen_paths = [MARKDOWN_DIR, CSS_DIR, IMAGES_DIR]
   listener = Listen.to(*listen_paths, only: /\.(md|css|png|jpg|jpeg|gif|svg)$/) do
     puts "Change detected! Rebuilding site..."
