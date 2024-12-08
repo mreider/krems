@@ -20,24 +20,24 @@ For an example of a complete site built with Krems, check out the repository [ht
    - Open a terminal and `cd` into the directory.
 
 
-3. **Install Dependencies:**
+2. **Install Dependencies:**
    ```bash
    bundle install
    ```
 
-4. **Initialize a New Project:**
+3. **Initialize a New Project:**
    ```bash
    ruby krems.rb --init
    ```
    This creates all necessary files and directories for a simple example site.
 
-5. **Serve the Site:**
+4. **Serve the Site:**
    ```bash
    ruby krems.rb --serve
    ```
    This command builds the site and starts a local development server. Visit `http://localhost:4567` in your browser to see the site.
 
-6. **Explore the Generated Files:**
+5. **Explore the Generated Files:**
    - Look around the `markdown/`, `css/`, and other directories to see how the example site was created.
    - Check out the `index.md` file in the `markdown/` directory, which includes a post listing example.
 
