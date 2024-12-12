@@ -140,11 +140,12 @@ end
 def load_css_file
   if File.exist?(CONFIG_FILE)
     config = TomlRB.load_file(CONFIG_FILE)
-    config['css'] || "styles.css"
+    config['css'] || 'styles.css'
   else
-    "styles.css"
+    'styles.css'
   end
 end
+
 
 def clean_published_directory
   FileUtils.rm_rf(PUBLISHED_DIR)
@@ -160,13 +161,40 @@ end
 
 def load_defaults
   defaults_file = "defaults.toml"
-  File.exist?(defaults_file) ? TomlRB.load_file(defaults_file) : {}
+  if File.exist?(defaults_file)
+    defaults = TomlRB.load_file(defaults_file)
+    defaults
+  else
+    {}
+  end
 end
 
 def merge_defaults(front_matter, defaults)
-  defaults.each { |key, value| front_matter[key] = value unless front_matter.key?(key) }
-  front_matter
+  merged = front_matter.dup
+  defaults.each do |key, value|
+    if key == "menu" && front_matter[key].is_a?(Array) && value.is_a?(Array)
+      merged[key] = (front_matter[key] + value).uniq
+    else
+      merged[key] = value unless merged.key?(key)
+    end
+  end
+  merged
 end
+
+
+
+def parse_front_matter(content, defaults)
+  if content.strip.start_with?("+++")
+    front_matter, body = content.split("+++", 3)[1..2]
+    parsed_front_matter = TomlRB.parse(front_matter)
+    merged_front_matter = merge_defaults(parsed_front_matter, defaults)
+    [merged_front_matter, body.strip]
+  else
+    [merge_defaults({}, defaults), content.strip] # Use defaults if no front matter
+  end
+end
+
+
 
 def parse_front_matter(content, defaults)
   if content.strip.start_with?("+++")
@@ -177,6 +205,7 @@ def parse_front_matter(content, defaults)
     [defaults, content.strip]
   end
 end
+
 
 def absolute_path(base_url, relative_path)
   base_url = normalize_url(base_url)
@@ -193,6 +222,48 @@ def update_image_links(content, base_url)
     alt_text, image_path = $1, $2
     "![#{alt_text}](#{absolute_path(base_url, image_path)})"
   end
+end
+
+def generate_static_asset_links(base_url)
+  css_file = load_css_file
+  "<link rel='stylesheet' href='#{absolute_path(base_url, "css/#{css_file}")}'>" \
+  "<link rel='icon' href='#{absolute_path(base_url, 'images/favicon.ico')}'>"
+end
+
+def generate_header(base_url, front_matter)
+  title = front_matter['title'] || ''
+  summary = front_matter['summary'] || ''
+  date = front_matter['date']
+  author = front_matter['author'] || ''
+
+  # Generate a pretty date if available
+  pretty_date = Date.parse(date).strftime('%B %d, %Y') rescue nil if date
+
+  # Generate the author and date HTML
+  author_date_html = if author.strip.empty? && pretty_date.nil?
+                       ''
+                     elsif !author.strip.empty? && pretty_date
+                       "<p class='author-date'>By #{author} on #{pretty_date}</p>"
+                     elsif !author.strip.empty?
+                       "<p class='author-date'>By #{author}</p>"
+                     elsif pretty_date
+                       "<p class='author-date'>On #{pretty_date}</p>"
+                     end
+
+  # Generate the menu HTML
+  menu_html = generate_menu(front_matter, base_url)
+
+  # Combine into the header HTML
+  "<header id='header' class='py4'>" +
+    "<a href='#{base_url}' class='flex items-center'>" +
+    "<div id='logo' style='background-image: url(\"#{absolute_path(base_url, 'images/logo.png')}\"); width: 50px; height: 50px; background-size: cover; background-position: center;'></div>" +
+    "<div id='title' class='ml2'>" +
+    "<h1>#{title}</h1>" +
+    "</div></a>" +
+    "#{menu_html}" +
+    "#{author_date_html}" +
+    (summary.strip.empty? ? '' : "<p class='summary'>#{summary}</p>") +
+  "</header>"
 end
 
 def copy_static_assets
@@ -215,43 +286,43 @@ def generate_meta_tags(front_matter, base_url)
   tags.join("\n")
 end
 
-def generate_static_asset_links(base_url)
-  <<~HTML
-    <link rel="stylesheet" href="#{absolute_path(base_url, "css/#{load_css_file}")}">
-    <link rel="icon" href="#{absolute_path(base_url, "images/favicon.ico")}">
-  HTML
-end
 
 def generate_menu(front_matter, base_url)
-  return "" unless front_matter["menu"]
-  menu_items = front_matter["menu"].map do |entry|
-    formatted_path = entry["path"].sub(/\.md$/, ".html")
-    "<td><h4><a href=\"#{absolute_path(base_url, formatted_path)}\">#{entry["name"]}</a></h4></td>"
-  end
-  "<table><tr>#{menu_items.join('<td><h4>•</h4></td>')}</tr></table>"
+  menu_items = front_matter['menu'] || [] # Ensure menu is always an array
+  return '' if menu_items.empty? # Skip menu generation if no items
+
+  items_html = menu_items.map do |entry|
+    formatted_path = entry['path'].sub(/\.md$/, '.html')
+    "<li><a href='#{absolute_path(base_url, formatted_path)}'>#{entry['name']}</a></li>"
+  end.join("\n")
+
+  "<div id='nav'><ul>#{items_html}</ul></div>"
 end
+
 
 def generate_post_list(folder_name, base_url)
   folder_path = File.join(MARKDOWN_DIR, folder_name)
   return "" unless Dir.exist?(folder_path)
+
   posts_by_year = Dir.glob(File.join(folder_path, "*.md")).each_with_object(Hash.new { |h, k| h[k] = [] }) do |file, years|
     content = File.read(file)
     front_matter, _ = parse_front_matter(content, {})
     next unless front_matter["date"]
+
     year = Date.parse(front_matter["date"]).year
     file_name = File.basename(file, ".md")
     display_name = file_name.gsub(/[-_]/, " ").split.map(&:capitalize).join(" ")
     link_path = absolute_path(base_url, "#{folder_name}/#{file_name}.html")
     years[year] << { name: display_name, link: link_path }
   end
+
   posts_by_year.keys.sort.reverse.map do |year|
-    <<~HTML
-      <h4>#{year}</h4>
-      <ul>
-        #{posts_by_year[year].sort_by { |post| post[:name] }.map { |post| "<li><a href=\"#{post[:link]}\">#{post[:name]}</a></li>" }.join("\n")}
-      </ul>
-    HTML
-  end.join("\n")
+    post_items = posts_by_year[year].sort_by { |post| post[:name] }.map do |post|
+      "<li class='post-item my1'><a class='post-link' href='#{post[:link]}'>#{post[:name]}</a></li>"
+    end.join
+
+    "<h4 class='h3 my2'>#{year}</h4><ul class='post-list list-none'>#{post_items}</ul>"
+  end.join
 end
 
 def replace_custom_handlebars(content, base_url)
@@ -259,61 +330,58 @@ def replace_custom_handlebars(content, base_url)
 end
 
 def generate_footer(base_url)
-  <<~HTML
-    <footer>
-      <h4>&copy; #{Time.now.year} Created with <a href="https://github.com/mreider/krems">Krems</a></h4>
-    </footer>
-  HTML
+  "<footer class=\"footer px3 py2 border-box\">" \
+  "&copy; #{Time.now.year} Matt Reider | Created with <a href='https://github.com/mreider/krems'>Krems</a>" \
+  "</footer>"
 end
 
 def convert_markdown_to_html(base_url)
   defaults = load_defaults
-  renderer = Redcarpet::Render::HTML.new
+  renderer = Redcarpet::Render::HTML.new(hard_wrap: false)
   markdown = Redcarpet::Markdown.new(renderer, tables: true, autolink: true, fenced_code_blocks: true)
+  
+
   Dir.glob(File.join(MARKDOWN_DIR, "**/*.md")).each do |file|
     relative_path = Pathname.new(file).relative_path_from(Pathname.new(MARKDOWN_DIR)).to_s
     output_file = File.join(PUBLISHED_DIR, relative_path.sub(/\.md$/, ".html"))
     FileUtils.mkdir_p(File.dirname(output_file))
+
     md_content = File.read(file)
     front_matter, body_content = parse_front_matter(md_content, defaults)
     body_content = markdown.render(body_content)
     body_content = update_image_links(body_content, base_url)
     body_content = convert_links_to_html(body_content, base_url)
     body_content = replace_custom_handlebars(body_content, base_url)
-    menu = generate_menu(front_matter, base_url)
+
+    header = generate_header(base_url, front_matter)
     meta_tags = generate_meta_tags(front_matter, base_url)
     static_assets = generate_static_asset_links(base_url)
     footer = generate_footer(base_url)
-    header_content = ""
-    header_content << "<h1>#{front_matter['title']}</h1>" if front_matter['title']
-    if front_matter['author'] && front_matter['date']
-      formatted_date = Date.parse(front_matter['date']).strftime("%B %d, %Y")
-      header_content << "<h2>By #{front_matter['author']} on #{formatted_date}</h2>"
-    end
-    header_content << "<h3>#{front_matter['summary']}</h3>" if front_matter['summary']
-    if front_matter["image"]
-      normalized_image = front_matter["image"].sub(%r{^/}, "")
-      header_content << "<img src=\"#{absolute_path(base_url, normalized_image)}\" alt=\"#{front_matter['title']}\">"
-    end
-    File.write(output_file, <<~HTML)
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>#{front_matter['title'] || 'Krems'}</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        #{static_assets}
-        #{meta_tags}
-      </head>
-      <body>
-        #{menu}
-        #{header_content}
-        #{body_content}
-        #{footer}
-      </body>
-      </html>
-    HTML
+
+    html_content = "<!DOCTYPE html>" \
+    "<html>" \
+    "<head>" \
+    "<title>#{front_matter['title'] || 'krems'}</title>" \
+    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" \
+    "#{static_assets}" \
+    "#{meta_tags}" \
+    "</head>" \
+    "<body class=\"content max-width mx-auto\">" \
+    "#{header}" \
+    "<main class=\"mx3 my3\">" \
+    "#{body_content}" \
+    "</main>" \
+    "#{footer}" \
+    "</body>" \
+    "</html>"
+
+
+    File.write(output_file, html_content)
   end
 end
+
+
+
 
 def generate_site(local)
   base_url = load_base_url(local)
