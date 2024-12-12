@@ -1,7 +1,2 @@
-<<<<<<< HEAD
-url = "https://mreider.github.io/krems/"
-css = "github.css"
-=======
-url = "http://127.0.0.1:4567/"
+url =  "https://mreider.github.io/krems/"
 css = "cactus.css"
->>>>>>> 5f27fa7 (cactus only)
