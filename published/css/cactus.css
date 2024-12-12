@@ -105,6 +105,7 @@
 .my1 {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
+  list-style-type: disc;
 }
 .m2 {
   margin: 1rem;
@@ -150,7 +151,7 @@
 }
 .my3 {
   margin-top: 0rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0rem;
 }
 .m4 {
   margin: 4rem;
@@ -569,7 +570,7 @@ body {
   }
 }
 #header {
-  margin: 0 auto 2rem;
+  margin: 0 auto 0rem;
   width: 100%;
 }
 #header h1,
@@ -1022,11 +1023,13 @@ body {
 }
 .post-list {
   padding: 0;
+
+  list-style-type: disc;
 }
 .post-list .post-item {
   margin-bottom: 1rem;
   margin-left: 0;
-  list-style-type: none;
+  list-style-type: disc;
 }
 .post-list .post-item .meta {
   display: block;
@@ -1034,14 +1037,19 @@ body {
   min-width: 100px;
   color: #666;
   font-size: 14px;
+
+  list-style-type: disc;
 }
 @media (min-width: 480px) {
   .post-list .post-item {
     display: flex;
     margin-bottom: 5px;
+  list-style-type: disc;
   }
   .post-list .post-item .meta {
     text-align: left;
+
+  list-style-type: disc;
   }
 }
 .project-list {
@@ -1202,7 +1210,7 @@ article .content .caption {
 #archive .post-list .post-item {
   margin-bottom: 1rem;
   margin-left: 0;
-  list-style-type: none;
+  list-style-type: disc;
 }
 #archive .post-list .post-item .meta {
   display: block;
@@ -1216,6 +1224,8 @@ article .content .caption {
     display: flex;
     margin-bottom: 5px;
     margin-left: 1rem;
+
+  list-style-type: disc;
   }
   #archive .post-list .post-item .meta {
     text-align: left;
@@ -1665,4 +1675,22 @@ main {
 
 #header .author-date + .summary {
   margin-top: 0.3rem; /* Slight spacing between the two */
+}
+
+ul, ol {
+  margin-left: 0; /* Reset browser default margins */
+  padding-left: 0; /* Reset browser default padding */
+}
+
+.post-list li {
+  list-style-type: none; /* Disable default list style */
+  position: relative; /* Allows pseudo-elements */
+  padding-left: 1.2rem; /* Space for bullet */
+}
+
+.post-list li::before {
+  content: "•"; /* Unicode for bullet */
+  position: absolute;
+  left: 0; /* Align bullet */
+  color: #333; /* Bullet color */
 }
