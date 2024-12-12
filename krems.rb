@@ -231,15 +231,20 @@ def generate_static_asset_links(base_url)
 end
 
 def generate_header(base_url, front_matter)
-  title = front_matter['title'] || ''
+  # Load website title from config
+  website_title = load_website_title
+
+  # Extract front matter details
+  page_title = front_matter['title'] || ''
   summary = front_matter['summary'] || ''
   date = front_matter['date']
   author = front_matter['author'] || ''
+  image_path = front_matter['image'] || ''
 
   # Generate a pretty date if available
   pretty_date = Date.parse(date).strftime('%B %d, %Y') rescue nil if date
 
-  # Generate the author and date HTML
+  # Generate author and date HTML
   author_date_html = if author.strip.empty? && pretty_date.nil?
                        ''
                      elsif !author.strip.empty? && pretty_date
@@ -253,17 +258,41 @@ def generate_header(base_url, front_matter)
   # Generate the menu HTML
   menu_html = generate_menu(front_matter, base_url)
 
+  # Generate the image HTML
+  image_html = if !image_path.strip.empty?
+                 full_image_url = absolute_path(base_url, image_path)
+                 alt_text = File.basename(image_path, File.extname(image_path)).capitalize
+                 "<img src='#{full_image_url}' alt='#{alt_text}' class='page-image' />"
+               else
+                 ''
+               end
+
   # Combine into the header HTML
   "<header id='header' class='py4'>" +
-    "<a href='#{base_url}' class='flex items-center'>" +
-    "<div id='logo' style='background-image: url(\"#{absolute_path(base_url, 'images/logo.png')}\"); width: 50px; height: 50px; background-size: cover; background-position: center;'></div>" +
-    "<div id='title' class='ml2'>" +
-    "<h1>#{title}</h1>" +
-    "</div></a>" +
-    "#{menu_html}" +
+    "<div class='flex items-center'>" +
+      # Logo and Website Title
+      "<a href='#{base_url}' class='flex items-center'>" +
+        "<div id='logo' style='background-image: url(\"#{absolute_path(base_url, 'images/logo.png')}\"); width: 50px; height: 50px; background-size: cover; background-position: center;'></div>" +
+        "<div id='website-title' class='ml2'>" +
+          "<h1>#{website_title}</h1>" +
+        "</div>" +
+      "</a>" +
+      "#{menu_html}" +
+    "</div>" +
+    (!page_title.strip.empty? ? "<div id='page-title'><h2>#{page_title}</h2></div>" : '') +
     "#{author_date_html}" +
     (summary.strip.empty? ? '' : "<p class='summary'>#{summary}</p>") +
+    "#{image_html}" +
   "</header>"
+end
+
+
+
+def load_website_title
+  return "Default Website Title" unless File.exist?(CONFIG_FILE)
+
+  config = TomlRB.load_file(CONFIG_FILE)
+  config['website_title'] || "Default Website Title"
 end
 
 def copy_static_assets
@@ -320,8 +349,8 @@ def generate_post_list(folder_name, base_url)
     post_items = posts_by_year[year].sort_by { |post| post[:name] }.map do |post|
       "<li class='post-item my1'><a class='post-link' href='#{post[:link]}'>#{post[:name]}</a></li>"
     end.join
-
-    "<h4 class='h3 my2'>#{year}</h4><ul class='post-list list-none'>#{post_items}</ul>"
+    
+    "<h4 class='h3 my2'>#{year}</h4><ul class='post-list'>#{post_items}</ul>"
   end.join
 end
 
@@ -379,8 +408,6 @@ def convert_markdown_to_html(base_url)
     File.write(output_file, html_content)
   end
 end
-
-
 
 
 def generate_site(local)
