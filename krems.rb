@@ -13,118 +13,82 @@ IMAGES_DIR = "images"
 PUBLISHED_DIR = "published"
 CONFIG_FILE = "config.toml"
 
-DEFAULT_INDEX_CONTENT = <<~MARKDOWN
-  +++
-  title = "Welcome to Krems"
-  author = "Krems"
-  date = "#{Time.now.strftime('%Y-%m-%d')}"
-  summary = "Krems is running, but there was no index.md page, so I generated this one instead 😊."
-  +++
-
-  # Welcome to Krems
-
-  Krems is running, but there was no `index.md` page, so I generated this one instead. 😊
-MARKDOWN
-
 def normalize_url(url)
   url = url.to_s.strip
   url.end_with?("/") ? url : "#{url}/"
 end
 
 def initialize_project
-  puts "Initializing new Krems project..."
+  unless File.exist?(File.join(MARKDOWN_DIR, "index.md"))
+    puts "Initializing new Krems project..."
 
-  [MARKDOWN_DIR, CSS_DIR, IMAGES_DIR, PUBLISHED_DIR].each do |dir|
-    FileUtils.mkdir_p(dir)
-    puts "Created directory: #{dir}"
+    [MARKDOWN_DIR, CSS_DIR, IMAGES_DIR, PUBLISHED_DIR].each do |dir|
+      FileUtils.mkdir_p(dir)
+      puts "Created directory: #{dir}"
+    end
+
+    config_content = <<~TOML
+      url = "http://127.0.0.1:4567/"
+    TOML
+    File.write(CONFIG_FILE, config_content)
+    puts "Created file: #{CONFIG_FILE}"
+
+    defaults_content = <<~TOML
+      title = "Default Title"
+      author = "Default Author"
+      summary = "This is a default summary."
+      menu = [
+        { path = "/index.md", name = "Home" },
+        { path = "/example/post1.md", name = "First Post" }
+      ]
+    TOML
+
+    File.write("defaults.toml", defaults_content)
+    puts "Created file: defaults.toml"
+
+    index_content = <<~MARKDOWN
+      +++
+      title = "Welcome to Krems"
+      +++
+
+      This is the default index page. Below is a list of posts in the 'example' directory:
+
+      {{ list_posts(example) }}
+    MARKDOWN
+    File.write(File.join(MARKDOWN_DIR, "index.md"), index_content)
+    puts "Created file: markdown/index.md"
+
+    example_dir = File.join(MARKDOWN_DIR, "example")
+    FileUtils.mkdir_p(example_dir)
+    puts "Created directory: markdown/example"
+
+    example_post_1 = <<~MARKDOWN
+      +++
+      title = "First Example Post"
+      author = "Krems"
+      date = "#{Time.now.strftime('%Y-%m-%d')}"
+      summary = "This is the first example post."
+      +++
+
+      This is the content of the first example post.
+    MARKDOWN
+    File.write(File.join(example_dir, "post1.md"), example_post_1)
+    puts "Created file: markdown/example/post1.md"
+
+    example_post_2 = <<~MARKDOWN
+      +++
+      title = "Second Example Post"
+      author = "Krems"
+      date = "#{(Time.now - 86400).strftime('%Y-%m-%d')}"
+      summary = "This is the second example post."
+      +++
+
+      This is the content of the second example post.
+    MARKDOWN
+    File.write(File.join(example_dir, "post2.md"), example_post_2)
+    puts "Created file: markdown/example/post2.md"
+    puts "Krems project initialized successfully."
   end
-
-  config_content = <<~TOML
-    url = "http://127.0.0.1:4567/"
-    css = "styles.css"
-  TOML
-  File.write(CONFIG_FILE, config_content)
-  puts "Created file: #{CONFIG_FILE}"
-
-  defaults_content = <<~TOML
-    title = "Default Title"
-    author = "Default Author"
-    summary = "This is a default summary."
-    menu = [
-      { path = "/index.md", name = "Home" },
-      { path = "/example/post1.md", name = "First Post" }
-    ]
-  TOML
-  File.write("defaults.toml", defaults_content)
-  puts "Created file: defaults.toml"
-
-  index_content = <<~MARKDOWN
-    +++
-    title = "Welcome to Krems"
-    +++
-
-    This is the default index page. Below is a list of posts in the 'example' directory:
-
-    {{ list_posts(example) }}
-  MARKDOWN
-  File.write(File.join(MARKDOWN_DIR, "index.md"), index_content)
-  puts "Created file: markdown/index.md"
-
-  example_dir = File.join(MARKDOWN_DIR, "example")
-  FileUtils.mkdir_p(example_dir)
-  puts "Created directory: markdown/example"
-
-  example_post_1 = <<~MARKDOWN
-    +++
-    title = "First Example Post"
-    author = "Krems"
-    date = "#{Time.now.strftime('%Y-%m-%d')}"
-    summary = "This is the first example post."
-    +++
-
-    This is the content of the first example post.
-  MARKDOWN
-  File.write(File.join(example_dir, "post1.md"), example_post_1)
-  puts "Created file: markdown/example/post1.md"
-
-  example_post_2 = <<~MARKDOWN
-    +++
-    title = "Second Example Post"
-    author = "Krems"
-    date = "#{(Time.now - 86400).strftime('%Y-%m-%d')}"
-    summary = "This is the second example post."
-    +++
-
-    This is the content of the second example post.
-  MARKDOWN
-  File.write(File.join(example_dir, "post2.md"), example_post_2)
-  puts "Created file: markdown/example/post2.md"
-
-  default_css_content = <<~CSS
-    body {
-      font-family: Helvetica, Arial, sans-serif;
-      line-height: 1.5;
-      margin: 0;
-      padding: 20px;
-    }
-
-    h1, h2, h3, h4, h5, h6 {
-      color: #333;
-    }
-
-    a {
-      color: #3973ad;
-      text-decoration: none;
-    }
-
-    a:hover {
-      color: #4183C4;
-    }
-  CSS
-  File.write(File.join(CSS_DIR, "styles.css"), default_css_content)
-  puts "Created file: css/styles.css"
-
-  puts "Krems project initialized successfully."
 end
 
 def load_base_url(local = false)
@@ -137,27 +101,11 @@ def load_base_url(local = false)
   end
 end
 
-def load_css_file
-  if File.exist?(CONFIG_FILE)
-    config = TomlRB.load_file(CONFIG_FILE)
-    config['css'] || 'styles.css'
-  else
-    'styles.css'
-  end
-end
-
-
 def clean_published_directory
   FileUtils.rm_rf(PUBLISHED_DIR)
   FileUtils.mkdir_p(PUBLISHED_DIR)
 end
 
-def ensure_index_md
-  index_file = File.join(MARKDOWN_DIR, "index.md")
-  unless File.exist?(index_file)
-    File.write(index_file, DEFAULT_INDEX_CONTENT)
-  end
-end
 
 def load_defaults
   defaults_file = "defaults.toml"
@@ -181,21 +129,6 @@ def merge_defaults(front_matter, defaults)
   merged
 end
 
-
-
-def parse_front_matter(content, defaults)
-  if content.strip.start_with?("+++")
-    front_matter, body = content.split("+++", 3)[1..2]
-    parsed_front_matter = TomlRB.parse(front_matter)
-    merged_front_matter = merge_defaults(parsed_front_matter, defaults)
-    [merged_front_matter, body.strip]
-  else
-    [merge_defaults({}, defaults), content.strip] # Use defaults if no front matter
-  end
-end
-
-
-
 def parse_front_matter(content, defaults)
   if content.strip.start_with?("+++")
     front_matter, body = content.split("+++", 3)[1..2]
@@ -214,7 +147,10 @@ def absolute_path(base_url, relative_path)
 end
 
 def convert_links_to_html(content, base_url)
-  content.gsub(/href="(\/?[a-zA-Z0-9\-_\/\.]+)\.md"/) { "href=\"#{absolute_path(base_url, "#{$1}.html")}\"" }
+  content.gsub(/href="([^"]+)\.md(\?[^"]*|#[^"]*|)"/) do
+    link_path = absolute_path(base_url, $1) + ".html" + $2
+    "href=\"#{link_path}\""
+  end
 end
 
 def update_image_links(content, base_url)
@@ -225,74 +161,35 @@ def update_image_links(content, base_url)
 end
 
 def generate_static_asset_links(base_url)
-  css_file = load_css_file
-  "<link rel='stylesheet' href='#{absolute_path(base_url, "css/#{css_file}")}'>" \
-  "<link rel='icon' href='#{absolute_path(base_url, 'images/favicon.ico')}'>"
+  <<~HTML
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="#{absolute_path(base_url, 'css/styles.css')}">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Raleway:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="#{absolute_path(base_url, 'images/favicon.ico')}">
+  HTML
 end
 
 def generate_header(base_url, front_matter)
-  # Load website title from config
-  website_title = load_website_title
+  menu_items = front_matter['menu'] || []
+  nav_links = menu_items.map do |entry|
+    formatted_path = entry['path'].sub(/\.md$/, '.html')
+    "<li class='nav-item'><a class='nav-link' href='#{absolute_path(base_url, formatted_path)}'>#{entry['name']}</a></li>"
+  end.join
 
-  # Extract front matter details
-  page_title = front_matter['title'] || ''
-  summary = front_matter['summary'] || ''
-  date = front_matter['date']
-  author = front_matter['author'] || ''
-  image_path = front_matter['image'] || ''
-
-  # Generate a pretty date if available
-  pretty_date = Date.parse(date).strftime('%B %d, %Y') rescue nil if date
-
-  # Generate author and date HTML
-  author_date_html = if author.strip.empty? && pretty_date.nil?
-                       ''
-                     elsif !author.strip.empty? && pretty_date
-                       "<p class='author-date'>By #{author} on #{pretty_date}</p>"
-                     elsif !author.strip.empty?
-                       "<p class='author-date'>By #{author}</p>"
-                     elsif pretty_date
-                       "<p class='author-date'>On #{pretty_date}</p>"
-                     end
-
-  # Generate the menu HTML
-  menu_html = generate_menu(front_matter, base_url)
-
-  # Generate the image HTML
-  image_html = if !image_path.strip.empty?
-                 full_image_url = absolute_path(base_url, image_path)
-                 alt_text = File.basename(image_path, File.extname(image_path)).capitalize
-                 "<img src='#{full_image_url}' alt='#{alt_text}' class='page-image' />"
-               else
-                 ''
-               end
-
-  # Combine into the header HTML
-  "<header id='header' class='py4'>" +
-    "<div class='flex items-center'>" +
-      # Logo and Website Title
-      "<a href='#{base_url}' class='flex items-center'>" +
-        "<div id='logo' style='background-image: url(\"#{absolute_path(base_url, 'images/logo.png')}\"); width: 50px; height: 50px; background-size: cover; background-position: center;'></div>" +
-        "<div id='website-title' class='ml2'>" +
-          "<h1>#{website_title}</h1>" +
-        "</div>" +
-      "</a>" +
-      "#{menu_html}" +
-    "</div>" +
-    (!page_title.strip.empty? ? "<div id='page-title'><h2>#{page_title}</h2></div>" : '') +
-    "#{author_date_html}" +
-    (summary.strip.empty? ? '' : "<p class='summary'>#{summary}</p>") +
-    "#{image_html}" +
-  "</header>"
-end
-
-
-
-def load_website_title
-  return "Default Website Title" unless File.exist?(CONFIG_FILE)
-
-  config = TomlRB.load_file(CONFIG_FILE)
-  config['website_title'] || "Default Website Title"
+  <<~HTML
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            #{nav_links}
+          </ul>
+        </div>
+      </div>
+    </nav>
+  HTML
 end
 
 def copy_static_assets
@@ -317,15 +214,39 @@ end
 
 
 def generate_menu(front_matter, base_url)
-  menu_items = front_matter['menu'] || [] # Ensure menu is always an array
-  return '' if menu_items.empty? # Skip menu generation if no items
+  menu_items = front_matter['menu'] || []
+  return '' if menu_items.empty?
 
   items_html = menu_items.map do |entry|
     formatted_path = entry['path'].sub(/\.md$/, '.html')
-    "<li><a href='#{absolute_path(base_url, formatted_path)}'>#{entry['name']}</a></li>"
-  end.join("\n")
+    if entry['children']
+      # Bootstrap dropdown for nested menus
+      <<~HTML
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="##{absolute_path(base_url, formatted_path)}" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            #{entry['name']}
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+            #{entry['children'].map { |child| "<li><a class='dropdown-item' href='#{absolute_path(base_url, child['path'])}'>#{child['name']}</a></li>" }.join}
+          </ul>
+        </li>
+      HTML
+    else
+      # Standard navigation item
+      <<~HTML
+        <li class="nav-item">
+          <a class="nav-link" href="#{absolute_path(base_url, formatted_path)}">#{entry['name']}</a>
+        </li>
+      HTML
+    end
+  end.join
 
-  "<div id='nav'><ul>#{items_html}</ul></div>"
+  # Wrap items in a Bootstrap navigation container
+  <<~HTML
+    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+      #{items_html}
+    </ul>
+  HTML
 end
 
 
@@ -333,6 +254,7 @@ def generate_post_list(folder_name, base_url)
   folder_path = File.join(MARKDOWN_DIR, folder_name)
   return "" unless Dir.exist?(folder_path)
 
+  # Group posts by year
   posts_by_year = Dir.glob(File.join(folder_path, "*.md")).each_with_object(Hash.new { |h, k| h[k] = [] }) do |file, years|
     content = File.read(file)
     front_matter, _ = parse_front_matter(content, {})
@@ -345,30 +267,59 @@ def generate_post_list(folder_name, base_url)
     years[year] << { name: display_name, link: link_path }
   end
 
+  # Generate HTML
   posts_by_year.keys.sort.reverse.map do |year|
     post_items = posts_by_year[year].sort_by { |post| post[:name] }.map do |post|
-      "<li class='post-item my1'><a class='post-link' href='#{post[:link]}'>#{post[:name]}</a></li>"
-    end.join
-    
-    "<h4 class='h3 my2'>#{year}</h4><ul class='post-list'>#{post_items}</ul>"
-  end.join
+      <<~HTML
+        <li class="list-group-item">
+          <a class="text-decoration-none" href="#{post[:link]}">#{post[:name]}</a>
+        </li>
+      HTML
+    end.join("\n")
+
+    <<~HTML
+      <div class="mb-4">
+        <h4 class="fw-bold text-primary">#{year}</h4>
+        <ul class="list-group">
+          #{post_items}
+        </ul>
+      </div>
+    HTML
+  end.join("\n")
 end
+
+
 
 def replace_custom_handlebars(content, base_url)
   content.gsub(/\{\{\s*list_posts\(([^)]+)\)\s*\}\}/) { generate_post_list($1.strip, base_url) }
 end
 
 def generate_footer(base_url)
-  "<footer class=\"footer px3 py2 border-box\">" \
-  "&copy; #{Time.now.year} Matt Reider | Created with <a href='https://github.com/mreider/krems'>Krems</a>" \
-  "</footer>"
+  <<~HTML
+    <footer class="bg-light py-4 mt-auto">
+      <div class="container text-center">
+        <p class="mb-2">&copy; #{Time.now.year} | Created with <span class="text-primary">Krems</span></p>
+        <p class="mb-0">
+          <a href="#top" class="text-decoration-none text-primary">Back to top</a>
+        </p>
+      </div>
+    </footer>
+  HTML
 end
+
+def wrap_body_content(rendered_body_content)
+  <<~HTML
+    <div class="container py-4">
+      #{rendered_body_content}
+    </div>
+  HTML
+end
+
 
 def convert_markdown_to_html(base_url)
   defaults = load_defaults
-  renderer = Redcarpet::Render::HTML.new(hard_wrap: false)
+  renderer = Redcarpet::Render::HTML.new(hard_wrap: true)
   markdown = Redcarpet::Markdown.new(renderer, tables: true, autolink: true, fenced_code_blocks: true)
-  
 
   Dir.glob(File.join(MARKDOWN_DIR, "**/*.md")).each do |file|
     relative_path = Pathname.new(file).relative_path_from(Pathname.new(MARKDOWN_DIR)).to_s
@@ -376,44 +327,81 @@ def convert_markdown_to_html(base_url)
     FileUtils.mkdir_p(File.dirname(output_file))
 
     md_content = File.read(file)
-    front_matter, body_content = parse_front_matter(md_content, defaults)
-    body_content = markdown.render(body_content)
-    body_content = update_image_links(body_content, base_url)
-    body_content = convert_links_to_html(body_content, base_url)
-    body_content = replace_custom_handlebars(body_content, base_url)
+    front_matter, raw_body_content = parse_front_matter(md_content, defaults)
 
+    # Render markdown content and process links
+    rendered_body_content = markdown.render(raw_body_content)
+    rendered_body_content = convert_links_to_html(rendered_body_content, base_url)
+    rendered_body_content = replace_custom_handlebars(rendered_body_content, base_url)
+
+    # Post-specific meta details
+    post_title = front_matter['title'] || ''
+    post_author = front_matter['author'] || ''
+    post_date = front_matter['date'] ? Date.parse(front_matter['date']).strftime('%B %d, %Y') : nil
+    post_summary = front_matter['summary'] || ''
+    post_image = front_matter['image'] || ''
+
+    # Bootstrap-styled post meta information
+    post_meta = <<~HTML
+      <div class="mb-4" id="top">
+        #{post_image.to_s.strip.empty? ? '' : "<div class='mb-3'><img src='#{absolute_path(base_url, post_image)}' alt='#{post_title}' class='img-fluid rounded'></div>"}
+        #{post_title.to_s.strip.empty? ? '' : "<h1 class='h3 text-primary mb-2'>#{post_title}</h1>"}
+        #{post_summary.to_s.strip.empty? ? '' : "<p class='text-muted'>#{post_summary}</p>"}
+        #{post_author.to_s.strip.empty? && post_date.nil? ? '' : "<p class='text-secondary small'>#{post_author.to_s.strip.empty? ? '' : "By #{post_author}"}#{post_date ? " on #{post_date}" : ''}</p>"}
+      </div>
+    HTML
+
+    # Generate header, meta tags, and footer
     header = generate_header(base_url, front_matter)
     meta_tags = generate_meta_tags(front_matter, base_url)
     static_assets = generate_static_asset_links(base_url)
     footer = generate_footer(base_url)
 
-    html_content = "<!DOCTYPE html>" \
-    "<html>" \
-    "<head>" \
-    "<title>#{front_matter['title'] || 'krems'}</title>" \
-    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" \
-    "#{static_assets}" \
-    "#{meta_tags}" \
-    "</head>" \
-    "<body class=\"content max-width mx-auto\">" \
-    "#{header}" \
-    "<main class=\"mx3 my3\">" \
-    "#{body_content}" \
-    "</main>" \
-    "#{footer}" \
-    "</body>" \
-    "</html>"
+    # Combine everything into Bootstrap layout
+    html_content = <<~HTML
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <title>#{post_title}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        #{static_assets}
+        #{meta_tags}
+      </head>
+      <body>
+        <div class="wrapper d-flex flex-column min-vh-100">
+          <header class="mb-4">
+            #{header}
+          </header>
+          <main class="flex-grow-1">
+            <div class="container py-4">
+              #{post_meta}
+              <div class="content">
+                #{rendered_body_content}
+              </div>
+            </div>
+          </main>
+          <footer>
+            #{footer}
+          </footer>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+      </body>
+      </html>
+    HTML
 
-
+    # Write the generated HTML to the output file
     File.write(output_file, html_content)
   end
 end
 
 
+
 def generate_site(local)
   base_url = load_base_url(local)
   clean_published_directory
-  ensure_index_md
+  unless File.exist?(File.join(MARKDOWN_DIR, "index.md"))
+    raise "Error: 'index.md' is missing in the #{MARKDOWN_DIR} directory."
+  end
   convert_markdown_to_html(base_url)
   copy_static_assets
 end
