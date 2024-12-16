@@ -445,8 +445,6 @@ def convert_markdown_to_html(base_url)
   end
 end
 
-
-
 def generate_site(local)
   base_url = load_base_url(local)
   clean_published_directory
