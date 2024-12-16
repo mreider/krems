@@ -1,88 +1,140 @@
 ## Krems Static Site Generator
 
-### Overview  
-Krems is a simple Ruby-based static site generator designed to convert Markdown files into HTML.
+### Overview
 
-I love Hugo, Hexo, Jekyll, Astro, and other static site generators, but I wanted something much simpler—something that would support a classless stylesheet, work with standard Markdown export libraries like Redcarpet, and avoid any magic. Krems gives you total control without unnecessary complexity.
+Krems is a lightweight, Ruby-based static site generator that converts Markdown files into responsive HTML. Designed for simplicity, Krems combines classless and Bootstrap styling options with standard Markdown export libraries like Redcarpet, giving you complete control over your site's structure and functionality without unnecessary complexity or magic.
 
-For an example of a complete site built with Krems, check out the repository [https://github.com/mreider/mreider.com](https://github.com/mreider/mreider.com) or visit the live site at [mreider.com](https://mreider.com)
+Visit the [repository](https://github.com/mreider/mreider.com) for an example of a site built with Krems or check out the live site at [mreider.com](https://mreider.com).
 
 ---
 
 ### Getting Started
 
-1. **Download and Setup:**
+#### Prerequisites
 
- **Prerequisite:** Ensure you have Ruby installed on your system.
- 
-   - Download the latest release from the [GitHub Releases page](https://github.com/mreider/krems/releases).
-   - Unzip the release to a directory of your choice.
-   - Open a terminal and `cd` into the directory.
+- Ruby (3.1 or higher recommended)
+- Bundler gem (`gem install bundler`)
 
+#### Setup and Installation
 
-2. **Install Dependencies:**
+1. **Clone the Repository**  
+   Clone or download the Krems repository:
+   ```bash
+   git clone https://github.com/mreider/krems.git
+   cd krems
+   ```
+
+2. **Install Dependencies**  
+   Install the required gems:
    ```bash
    bundle install
    ```
 
-3. **Initialize a New Project:**
+3. **Initialize a New Project**  
+   Create a new Krems project in the current directory:
    ```bash
    ruby krems.rb --init
    ```
-   This creates all necessary files and directories for a simple example site.
+   This generates all required directories and files for a basic site, including example Markdown files, default configurations, and a minimal stylesheet.
 
-4. **Serve the Site:**
+4. **Preview Locally**  
+   Build the site and start a local development server:
    ```bash
    ruby krems.rb --serve
    ```
-   This command builds the site and starts a local development server. Visit `http://localhost:4567` in your browser to see the site.
+   Access your site at `http://127.0.0.1:4567`. The server automatically rebuilds the site whenever you make changes to Markdown, CSS, or image files.
 
-5. **Explore the Generated Files:**
-   - Look around the `markdown/`, `css/`, and other directories to see how the example site was created.
-   - Check out the `index.md` file in the `markdown/` directory, which includes a post listing example.
+5. **Build for Production**  
+   Generate the static site for deployment:
+   ```bash
+   ruby krems.rb --build
+   ```
+   The output will be in the `published/` directory.
+
+---
+
+### Features
+
+1. **Markdown to HTML Conversion**  
+   Converts Markdown files to HTML using the Redcarpet library. Supports:
+   - Tables
+   - Autolinks
+   - Fenced code blocks
+   - TOML front matter for metadata
+
+2. **TOML Front Matter**  
+   Add metadata such as `title`, `author`, `date`, `summary`, and `image` directly in Markdown files. Default metadata can be defined in `defaults.toml`.
+
+3. **Dynamic Menu Generation**  
+   Automatically generate navigation menus using the `menu` field in `defaults.toml` or individual file front matter. Supports nested dropdown menus.
+
+4. **Post Listing by Year**  
+   Generate a chronological list of posts in any folder using the `{{ list_posts(folder_name) }}` placeholder.
+
+5. **Bootstrap Styling**  
+   Built-in Bootstrap integration for responsive layouts, including navigation menus, post metadata, and overall styling.
+
+6. **Live Server with Auto-Rebuild**  
+   The `--serve` command starts a local server and rebuilds your site automatically whenever changes are detected in Markdown, CSS, or images.
+
+7. **Static Asset Handling**  
+   Automatically copies CSS, images, and other static files to the `published/` directory.
+
+8. **Open Graph Meta Tags**  
+   Automatically generates Open Graph meta tags from front matter for improved social media sharing.
+
+Other things it does:
+
+- **Custom Link Conversion**: Converts `.md` links in Markdown files to `.html` links in the generated site.
+- **Nested Menus**: Supports multi-level navigation menus using dropdowns.
+- **Flexible Configuration**: Define the base URL, CSS file, and other settings in `config.toml`.
+
+---
+
+### Directory Structure
+
+When you initialize a Krems project, the following structure is created:
+
+```
+/
+├── markdown/        # Markdown source files
+│   ├── index.md     # Main entry point
+│   ├── example/     # Example posts
+│       ├── post1.md # Example post 1
+│       └── post2.md # Example post 2
+├── css/             # Custom CSS files
+│   └── styles.css   # Default stylesheet
+├── images/          # Image assets
+├── published/       # Generated static files
+├── krems.rb         # Main Ruby script
+├── defaults.toml    # Default front matter
+├── config.toml      # Global configuration
+└── Gemfile          # Gem dependencies
+```
 
 ---
 
 ### Example Workflow for GitHub Pages
 
-To deploy your site to GitHub Pages, you can use the following workflow file. This file assumes your `published/` directory contains the generated HTML.
+To deploy your site to GitHub Pages, use the following GitHub Actions workflow:
 
 #### `.github/workflows/pages.yml`
 
 ```yaml
-name: Build and Deploy Krems Site to GitHub Pages
+name: Deploy Krems Site to GitHub Pages
 
 on:
   push:
     branches:
-      - main 
+      - main
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
-defaults:
-  run:
-    shell: bash
-
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v2
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -93,81 +145,18 @@ jobs:
         run: bundle install
 
       - name: Build Krems Site
-        env:
-          BASE_URL: ${{ steps.pages.outputs.base_url }}
         run: ruby krems.rb --build
 
-      - name: Upload Krems Artifact
+      - name: Deploy to GitHub Pages
         uses: actions/upload-pages-artifact@v1
         with:
           path: ./published
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v1
-```
----
-
-### Directory Structure
-
-When you initialize a new project, Krems generates the following structure:
-
-```
-/
-├── markdown/        # Directory for Markdown files
-│   ├── index.md     # Main Markdown file (default entry point)
-│   ├── example/     # Example directory with two posts
-│       ├── post1.md # Example post 1
-│       └── post2.md # Example post 2
-├── css/             # Directory for CSS files (static assets)
-│   └── styles.css   # Default stylesheet
-├── images/          # Directory for images (static assets)
-├── published/       # Directory where generated HTML and assets are published
-├── krems.rb         # Main Ruby script
-├── defaults.toml    # Optional defaults for front matter (TOML format)
-├── config.toml      # Global configuration for base URL and CSS file
-└── Gemfile          # Gem dependencies for the project
 ```
 
 ---
 
-### Features
+### Support and Contributions
 
-1. **Markdown to HTML Conversion**
-   - Converts Markdown files to HTML using the Redcarpet library.
-   - Extracts front matter written in TOML format for metadata such as `title`, `author`, `date`, `summary`, etc.
+Have a question or found a bug? Open an issue on the [GitHub Issues](https://github.com/mreider/krems/issues) page.
 
-2. **Front Matter Handling**
-   - Supports TOML front matter at the top of Markdown files.
-   - Merges defaults from `defaults.toml` with each file’s front matter.
-
-3. **Global Configuration**
-   - The `config.toml` file allows you to set:
-     - `url`: Base URL for the site.
-     - `css`: Specify the CSS file to be used for styling.
-
-4. **Post List Generation**
-   - Generates a list of posts within a folder using the `{{ list_posts(folder_name) }}` placeholder.
-
-5. **Menu Generation**
-   - Parses a `menu` field from `defaults.toml` or front matter to generate navigation menus.
-
-6. **Static Assets**
-   - Automatically links CSS and image files in the generated HTML `<head>` section.
-
-7. **Live Server**
-   - `--serve` builds the site and starts a local server.
-   - Automatically rebuilds the site on file changes using the `listen` gem.
-
----
-
-### Support and Questions
-
-If you have any questions, feel free to open an issue in the [GitHub Issues](https://github.com/mreider/krems/issues) section of the repository.
+Pull requests are welcome for improvements or new features.
