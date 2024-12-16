@@ -177,6 +177,73 @@ def generate_header(base_url, front_matter)
     "<li class='nav-item'><a class='nav-link' href='#{absolute_path(base_url, formatted_path)}'>#{entry['name']}</a></li>"
   end.join
 
+  quacker_enabled = File.exist?(CONFIG_FILE) && TomlRB.load_file(CONFIG_FILE)['quacker'] == true
+  subscription_form = ""
+  if quacker_enabled
+    subscription_form = <<~HTML
+      <form id="subscription-form" class="d-flex ms-auto">
+        <input type="email" name="email" required placeholder="Enter your email" class="form-control me-2">
+        <button type="submit" class="btn btn-primary">Subscribe</button>
+      </form>
+      <p id="status-message" class="ms-auto mt-2 text-success" style="display: none;"></p>
+      <script>
+        const form = document.getElementById("subscription-form");
+        const statusMessage = document.getElementById("status-message");
+        const checkSubscriptionStatus = async (email) => {
+            const url = "https://quacker.eu/subscribe/1?email=" + encodeURIComponent(email);
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.is_subscribed;
+                }
+            } catch (error) {
+                console.error("Error checking subscription status:", error);
+            }
+            return false;
+        };
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const emailInput = form.querySelector('input[name="email"]');
+            const button = form.querySelector("button");
+            const email = emailInput.value;
+            button.textContent = "Please wait...";
+            button.disabled = true;
+            emailInput.disabled = true;
+            try {
+                const isSubscribed = await checkSubscriptionStatus(email);
+                if (isSubscribed) {
+                    form.style.display = "none";
+                    statusMessage.style.display = "block";
+                    statusMessage.textContent = "Already subscribed!";
+                    return;
+                }
+                const url = "https://quacker.eu/subscribe/1";
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email })
+                });
+                if (response.ok) {
+                    form.style.display = "none";
+                    statusMessage.style.display = "block";
+                    statusMessage.textContent = "Subscribed successfully!";
+                } else {
+                    form.style.display = "none";
+                    statusMessage.style.display = "block";
+                    statusMessage.textContent = "Something went wrong. Please try again later.";
+                }
+            } catch (error) {
+                console.error("Error submitting form:", error);
+                form.style.display = "none";
+                statusMessage.style.display = "block";
+                statusMessage.textContent = "Something went wrong. Please try again later.";
+            }
+        });
+      </script>
+    HTML
+  end
+
   <<~HTML
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container-fluid">
@@ -187,6 +254,7 @@ def generate_header(base_url, front_matter)
           <ul class="navbar-nav">
             #{nav_links}
           </ul>
+          #{subscription_form}
         </div>
       </div>
     </nav>
