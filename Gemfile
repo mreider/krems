@@ -7,3 +7,4 @@ gem 'listen'
 gem "rackup", "~> 2.2"
 gem "puma", "~> 6.5"
 gem 'optparse'
+gem 'rss'

@@ -6,6 +6,7 @@ require 'date'
 require 'titleize'
 require 'listen'
 require 'optparse'
+require 'rss'
 
 MARKDOWN_DIR = "markdown"
 CSS_DIR = "css"
@@ -288,7 +289,57 @@ def generate_post_list(folder_name, base_url)
   end.join("\n")
 end
 
+def generate_rss_feed(base_url)
+  rss_file = File.join(PUBLISHED_DIR, "rss.xml")
+  defaults = load_defaults
+  all_posts = []
 
+  # Collect posts from all directories
+  Dir.glob(File.join(MARKDOWN_DIR, "**/*.md")).each do |file|
+    content = File.read(file)
+    front_matter, _ = parse_front_matter(content, defaults)
+    next unless front_matter['date'] && front_matter['title']
+
+    post_date = Date.parse(front_matter['date'])
+    post_title = front_matter['title']
+    post_summary = front_matter['summary'] || ''
+    relative_path = Pathname.new(file).relative_path_from(Pathname.new(MARKDOWN_DIR)).to_s
+    post_link = absolute_path(base_url, relative_path.sub(/\.md$/, '.html'))
+
+    all_posts << {
+      title: post_title,
+      date: post_date,
+      summary: post_summary,
+      link: post_link
+    }
+  end
+
+  # Sort posts by date (newest first)
+  all_posts.sort_by! { |post| -post[:date].to_time.to_i }
+
+  # Generate RSS feed
+  rss = RSS::Maker.make("atom") do |maker|
+    maker.channel.author = defaults['author'] || "Krems"
+    maker.channel.updated = all_posts.first[:date].to_time if all_posts.any?
+    maker.channel.about = absolute_path(base_url, "rss.xml")
+    maker.channel.title = defaults['title'] || "RSS Feed"
+    maker.channel.link = base_url
+    maker.channel.description = defaults['summary'] || "Latest posts"
+
+    all_posts.each do |post|
+      maker.items.new_item do |item|
+        item.link = post[:link]
+        item.title = post[:title]
+        item.summary = post[:summary]
+        item.updated = post[:date].to_time
+      end
+    end
+  end
+
+  # Write RSS feed to file
+  File.write(rss_file, rss.to_s)
+  puts "Generated RSS feed at #{rss_file}"
+end
 
 def replace_custom_handlebars(content, base_url)
   content.gsub(/\{\{\s*list_posts\(([^)]+)\)\s*\}\}/) { generate_post_list($1.strip, base_url) }
@@ -404,6 +455,7 @@ def generate_site(local)
   end
   convert_markdown_to_html(base_url)
   copy_static_assets
+  generate_rss_feed(base_url)
 end
 
 options = { mode: 'build' }

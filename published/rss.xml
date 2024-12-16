@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"
+  xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <author>
+    <name></name>
+  </author>
+  <id>http://127.0.0.1:4567/rss.xml</id>
+  <link href="http://127.0.0.1:4567/"/>
+  <subtitle></subtitle>
+  <title>Default Title</title>
+  <updated>2024-12-08T00:00:00+01:00</updated>
+  <entry>
+    <id>http://127.0.0.1:4567/example/post1.html</id>
+    <link href="http://127.0.0.1:4567/example/post1.html"/>
+    <summary>This is the first example post.</summary>
+    <title>First Example Post</title>
+    <updated>2024-12-08T00:00:00+01:00</updated>
+    <dc:date>2024-12-08T00:00:00+01:00</dc:date>
+  </entry>
+  <entry>
+    <id>http://127.0.0.1:4567/example/post2.html</id>
+    <link href="http://127.0.0.1:4567/example/post2.html"/>
+    <summary>This is the second example post.</summary>
+    <title>Second Example Post</title>
+    <updated>2024-12-07T00:00:00+01:00</updated>
+    <dc:date>2024-12-07T00:00:00+01:00</dc:date>
+  </entry>
+  <entry>
+    <id>http://127.0.0.1:4567/fun/everything-animal.html</id>
+    <link href="http://127.0.0.1:4567/fun/everything-animal.html"/>
+    <summary></summary>
+    <title>The Everything Animal</title>
+    <updated>2019-09-12T00:00:00+02:00</updated>
+    <dc:date>2019-09-12T00:00:00+02:00</dc:date>
+  </entry>
+  <dc:date>2024-12-08T00:00:00+01:00</dc:date>
+</feed>
