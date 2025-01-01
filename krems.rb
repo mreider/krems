@@ -417,7 +417,7 @@ def generate_footer(base_url)
   <<~HTML
     <footer class="bg-light py-4 mt-auto">
       <div class="container text-center">
-        <p class="mb-2">&copy; #{Time.now.year} | Created with <span class="text-primary">Krems</span></p>
+        <p class="mb-2">&copy; #{Time.now.year} | Created with <a href="https://github.com/mreider/krems">Krems</a></p>
         <p class="mb-0">
           <a href="#top" class="text-decoration-none text-primary">Back to top</a>
         </p>
