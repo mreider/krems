@@ -1,0 +1,88 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.23"
+
+      - name: Fix go.mod Version
+        run: |
+          sed -i 's/1\.23\.5/1\.23/' go.mod
+
+      - name: Get current version with Run Number
+        id: get_version
+        run: |
+          run_number=${{ github.run_number }}
+          next_version="v0.1.${run_number}"
+          echo "next_version=$next_version" >> $GITHUB_ENV
+          echo "Version to be created: $next_version"
+
+      - name: Debug Token Permissions
+        run: |
+          echo "Checking token permissions"
+          gh auth status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.next_version }}
+          release_name: ${{ env.next_version }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build binaries
+        run: |
+          GOOS=linux GOARCH=amd64 go build -ldflags="-X main.currentVersion=v${{ env.next_version }}" -o krems-linux-amd64
+          GOOS=linux GOARCH=arm64 go build -ldflags="-X main.currentVersion=v${{ env.next_version }}" -o krems-linux-arm64
+          GOOS=windows GOARCH=amd64 go build -ldflags="-X main.currentVersion=v${{ env.next_version }}" -o krems-windows-amd64.exe
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-X main.currentVersion=v${{ env.next_version }}" -o krems-darwin-amd64
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-X main.currentVersion=v${{ env.next_version }}" -o krems-darwin-arm64
+
+      - name: Upload Linux AMD64 Binary
+        run: |
+          gh release upload ${{ env.next_version }} ./krems-linux-amd64 --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Linux ARM64 Binary
+        run: |
+          gh release upload ${{ env.next_version }} ./krems-linux-arm64 --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows Binary
+        run: |
+          gh release upload ${{ env.next_version }} ./krems-windows-amd64.exe --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Darwin AMD64 Binary
+        run: |
+          gh release upload ${{ env.next_version }} ./krems-darwin-amd64 --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Darwin ARM64 Binary
+        run: |
+          gh release upload ${{ env.next_version }} ./krems-darwin-arm64 --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
