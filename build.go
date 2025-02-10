@@ -22,6 +22,13 @@ import (
 )
 
 // Config matches the structure of config.yaml
+
+type QuackerConfig struct {
+	Domain    string `yaml:"domain"`
+	SiteOwner string `yaml:"site_owner"`
+	Target    string `yaml:"target"`
+}
+
 type Config struct {
 	Website struct {
 		URL  string `yaml:"url"`
@@ -31,6 +38,8 @@ type Config struct {
 		Title string `yaml:"title"`
 		Path  string `yaml:"path"`
 	} `yaml:"menu"`
+
+	Quacker *QuackerConfig `yaml:"quacker,omitempty"`
 }
 
 // PageFrontMatter is the front matter in each .md file
@@ -639,6 +648,60 @@ const htmlTemplate = `<!DOCTYPE html>
         </li>
         {{end}}
       </ul>
+	  {{ if and .Config.Quacker (ne .Config.Quacker.Target "") }}
+		<form id="subscribe-form" action="https://{{.Config.Quacker.Target}}/subscribe" method="POST" class="d-flex ms-3">
+			<input type="hidden" name="owner" value="{{.Config.Quacker.SiteOwner}}">
+			<input type="hidden" name="domain" value="{{.Config.Quacker.Domain}}">
+			<div class="d-flex align-items-center gap-2" id="form-content">
+				<input type="email" class="form-control form-control-sm" id="email" name="email" placeholder="email" required>
+				<button type="submit" class="btn btn-secondary btn-sm">Subscribe</button>
+			</div>
+		</form>
+		<div id="subscribe-message" class="mt-3"></div>
+
+		<script>
+		document.getElementById('subscribe-form').addEventListener('submit', function(event) {
+			event.preventDefault();
+			
+			var form = document.getElementById('subscribe-form');
+			var messageDiv = document.getElementById('subscribe-message');
+
+			// Hide the form using Bootstrap's d-none class
+			form.classList.add('d-none');
+
+			// Clear previous messages
+			messageDiv.innerHTML = '';
+
+			var formData = new FormData(form);
+			fetch(form.action, {
+				method: 'POST',
+				body: formData
+			})
+			.then(response => {
+				if (response.ok) {
+					return response.text();
+				}
+				throw new Error('Subscription failed');
+			})
+			.then(message => {
+				messageDiv.innerHTML = '<div class="alert alert-success">' + message + '</div>';
+				setTimeout(() => {
+					messageDiv.innerHTML = '';  // Clear message
+					form.classList.remove('d-none'); // Show form again
+					form.reset();
+				}, 3000);
+			})
+			.catch(error => {
+				messageDiv.innerHTML = '<div class="alert alert-danger">' + error.message + '</div>';
+				setTimeout(() => {
+					messageDiv.innerHTML = '';  // Clear message
+					form.classList.remove('d-none'); // Show form again
+				}, 3000);
+			});
+		});
+		</script>
+
+		{{ end }}
     </div>
   </div>
 </nav>
