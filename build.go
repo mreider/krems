@@ -614,41 +614,41 @@ func imagePath(outputDir, img string) string {
 const htmlTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>{{.Page.FrontMatter.Title}} - {{.Config.Website.Name}}</title>
-  <meta name="description" content="{{.Page.FrontMatter.Description}}">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {{if .Page.FrontMatter.Image}}
-  <meta property="og:image" content="{{.Page.FrontMatter.Image | trimPrefixSlash}}">
-  <meta name="twitter:image" content="{{.Page.FrontMatter.Image | trimPrefixSlash}}">
-  {{end}}
-  <meta property="og:site_name" content="{{.Config.Website.Name}}">
-  <link rel="icon" href="/images/favicon.png" type="image/png">
+	<meta charset="UTF-8">
+	<title>{{if .Page.FrontMatter.Title}}{{.Page.FrontMatter.Title}} - {{end}}{{.Config.Website.Name}}</title>
+	<meta name="description" content="{{.Page.FrontMatter.Description}}">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	{{if .Page.FrontMatter.Image}}
+	<meta property="og:image" content="{{.Page.FrontMatter.Image | trimPrefixSlash}}">
+	<meta name="twitter:image" content="{{.Page.FrontMatter.Image | trimPrefixSlash}}">
+	{{end}}
+	<meta property="og:site_name" content="{{.Config.Website.Name}}">
+	<link rel="icon" href="/images/favicon.png" type="image/png">
 
-  <link rel="stylesheet" href="/css/bootstrap.min.css">
-  <style>
-  body{background: #FBF9F1;}
-  </style>
+	<link rel="stylesheet" href="/css/bootstrap.min.css">
+	<style>
+	body{background: #FBF9F1;}
+	</style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-light" style="background-color:#E5E1DA; margin-bottom:20px;">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="/">
-      <img src="/images/favicon.png" alt="" width="30" height="30" class="d-inline-block align-text-top me-1">
-      {{.Config.Website.Name}}
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#kremsNavbar" aria-controls="kremsNavbar" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="kremsNavbar">
-      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-        {{range $i, $label := .MenuItems}}
-        <li class="nav-item">
-          <a class="nav-link" href="{{index $.MenuTargets $i}}">{{$label}}</a>
-        </li>
-        {{end}}
-      </ul>
-	  {{ if and .Config.Quacker (ne .Config.Quacker.Target "") }}
+	<div class="container-fluid">
+		<a class="navbar-brand" href="/">
+			<img src="/images/favicon.png" alt="" width="30" height="30" class="d-inline-block align-text-top me-1">
+			{{.Config.Website.Name}}
+		</a>
+		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#kremsNavbar" aria-controls="kremsNavbar" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="kremsNavbar">
+			<ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+				{{range $i, $label := .MenuItems}}
+				<li class="nav-item">
+					<a class="nav-link" href="{{index $.MenuTargets $i}}">{{$label}}</a>
+				</li>
+				{{end}}
+			</ul>
+		{{ if and .Config.Quacker (ne .Config.Quacker.Target "") }}
 		<form id="subscribe-form" action="https://{{.Config.Quacker.Target}}/subscribe" method="POST" class="d-flex ms-3">
 			<input type="hidden" name="owner" value="{{.Config.Quacker.SiteOwner}}">
 			<input type="hidden" name="domain" value="{{.Config.Quacker.Domain}}">
@@ -702,31 +702,31 @@ const htmlTemplate = `<!DOCTYPE html>
 		</script>
 
 		{{ end }}
-    </div>
-  </div>
+		</div>
+	</div>
 </nav>
 
 <div class="container mt-5 mb-5">
 {{if .Page.FrontMatter.Image}}
-  {{ $cleanImg := .Page.FrontMatter.Image | trimPrefixSlash }}
-  <img src="/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
+	{{ $cleanImg := .Page.FrontMatter.Image | trimPrefixSlash }}
+	<img src="/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
 {{end}}
 
-<h3 class="display-6 mb-4">{{.Page.FrontMatter.Title}}</h3>
+<h3 class="display-6 mb-4">{{if .Page.FrontMatter.Title}}{{.Page.FrontMatter.Title}}{{else}}{{.Config.Website.Name}}{{end}}</h3>
 {{if .Page.FrontMatter.Description}}
 <p class="text-muted mb-4">{{.Page.FrontMatter.Description}}</p>
 {{end}}
 
 {{if eq .Page.FrontMatter.Type "list"}}
-  {{listPagesInDirectory .Page.RelPath}}
+	{{listPagesInDirectory .Page.RelPath}}
 {{else}}
-  <div class="mb-5">
-    {{.Page.HTMLContent}}
-  </div>
+	<div class="mb-5">
+		{{.Page.HTMLContent}}
+	</div>
 {{end}}
 
 <footer class="text-center">
-  Built using <a href="https://github.com/mreider/krems">Krems</a>
+	Built using <a href="https://github.com/mreider/krems">Krems</a>
 </footer>
 </div>
 
