@@ -98,7 +98,7 @@ image: "images/mollusk.png"
 Welcome to our sample site about mollusks! Just a short piece of text here
 about snails and slugs and other interesting creatures. 
 `
-    err := os.WriteFile("markdown/index.md", []byte(indexMD), 0644)
+	err = os.WriteFile("markdown/index.md", []byte(indexMD), 0644)
     if err != nil {
         fmt.Printf("Error writing markdown/index.md: %v\n", err)
         os.Exit(1)
@@ -122,7 +122,7 @@ Short text again for demonstration.
     fmt.Println("Created: markdown/topics/index.md")
 
 
-	configYAML := `# Example config for local test site
+    configYAML := `# Example config for local test site
 website:
   url: "http://localhost:8080"
   name: "Local Test Site"
@@ -138,9 +138,9 @@ menu:
         os.Exit(1)
     }
     fmt.Println("Created: config.yaml")
-	fmt.Println("\nYour sample site structure has been created!")
-	fmt.Println("Next steps:")
-	fmt.Println("  1) Modify the markdown content in ./markdown")
-	fmt.Println("  2) Edit config.yaml as needed")
-	fmt.Println("  3) Run 'krems --build' to generate your static site!")
+    fmt.Println("\nYour sample site structure has been created!")
+    fmt.Println("Next steps:")
+    fmt.Println("  1) Modify the markdown content in ./markdown")
+    fmt.Println("  2) Edit config.yaml as needed")
+    fmt.Println("  3) Run 'krems --build' to generate your static site!")
 }
