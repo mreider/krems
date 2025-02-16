@@ -726,7 +726,7 @@ const htmlTemplate = `<!DOCTYPE html>
 {{end}}
 
 <footer class="text-center">
-	♜ Generatted with <a href="https://github.com/mreider/krems">Krems</a> ♜
+	♜ Generated with <a href="https://github.com/mreider/krems">Krems</a> ♜
 </footer>
 </div>
 
