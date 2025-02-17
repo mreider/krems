@@ -21,7 +21,7 @@ func handleInit() {
 	// Create basic structure
 	dirs := []string{
 		"markdown",
-		"markdown/topics",
+		"markdown/universities",
 		"markdown/css",
 		"markdown/js",
 		"markdown/images",
@@ -90,57 +90,114 @@ func handleInit() {
 		os.Exit(1)
 	}
 
+	// Home index page with list front matter
 	indexMD := `---
-title: "All About Mollusks"
-image: "images/mollusk.png"
+title: "Krems Home Page"
+type: list
 ---
-
-Welcome to our sample site about mollusks! Just a short piece of text here
-about snails and slugs and other interesting creatures. 
 `
 	err = os.WriteFile("markdown/index.md", []byte(indexMD), 0644)
-    if err != nil {
-        fmt.Printf("Error writing markdown/index.md: %v\n", err)
-        os.Exit(1)
-    }
-    fmt.Println("Created: markdown/index.md")
+	if err != nil {
+		fmt.Printf("Error writing markdown/index.md: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Created: markdown/index.md")
 
-    // Subdirectory page: topics/index.md
-    topicsMD := `---
-title: "Mollusk Topics"
-image: "images/mollusk2.png"
+	// Krems city info page
+	kremsCityMD := `---
+title: "Krems City Info"
+date: "2024-11-26"
+image: "/images/krems1.png"
 ---
-
-Here we discuss more detailed topics related to mollusks in a subdirectory.
-Short text again for demonstration.
+Krems is a beautiful city in Austria known for its rich history, stunning architecture, and vibrant culture.
+Explore its winding streets, local markets, and historical landmarks.
 `
-    err = os.WriteFile("markdown/topics/index.md", []byte(topicsMD), 0644)
-    if err != nil {
-        fmt.Printf("Error writing markdown/topics/index.md: %v\n", err)
-        os.Exit(1)
-    }
-    fmt.Println("Created: markdown/topics/index.md")
+	err = os.WriteFile("markdown/krems_city_info.md", []byte(kremsCityMD), 0644)
+	if err != nil {
+		fmt.Printf("Error writing markdown/krems_city_info.md: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Created: markdown/krems_city_info.md")
 
+	// Krems travel info page
+	kremsTravelMD := `---
+title: "Krems Travel Info"
+date: "2024-11-26"
+image: "/images/krems2.png"
+---
+Discover the best travel tips and attractions in Krems.
+From scenic river walks to local culinary delights, plan your perfect visit to this charming Austrian city.
+`
+	err = os.WriteFile("markdown/krems_travel_info.md", []byte(kremsTravelMD), 0644)
+	if err != nil {
+		fmt.Printf("Error writing markdown/krems_travel_info.md: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Created: markdown/krems_travel_info.md")
 
-    configYAML := `# Example config for local test site
+	// Universities subdirectory index page
+	univIndexMD := `---
+title: "Universities in Krems"
+type: list
+---
+`
+	err = os.WriteFile("markdown/universities/index.md", []byte(univIndexMD), 0644)
+	if err != nil {
+		fmt.Printf("Error writing markdown/universities/index.md: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Created: markdown/universities/index.md")
+
+	// University 1 page
+	uni1MD := `---
+title: "University for Continuing Education Krems"
+date: "2024-11-26"
+image: "/images/uni1.png"
+---
+University for Continuing Education Krems is a leading institution in Krems, offering a diverse range of academic programs and cutting-edge research opportunities.
+`
+	err = os.WriteFile("markdown/universities/uni1.md", []byte(uni1MD), 0644)
+	if err != nil {
+		fmt.Printf("Error writing markdown/universities/uni1.md: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Created: markdown/universities/uni1.md")
+
+	// University 2 page
+	uni2MD := `---
+title: "IMC Krems University of Applied Sciences"
+date: "2024-11-26"
+image: "/images/uni2.png"
+---
+IMC Krems University of Applied Sciences is renowned for its innovative teaching methods and vibrant campus life, making it a hub of academic excellence in Krems.
+`
+	err = os.WriteFile("markdown/universities/uni2.md", []byte(uni2MD), 0644)
+	if err != nil {
+		fmt.Printf("Error writing markdown/universities/uni2.md: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Created: markdown/universities/uni2.md")
+
+	// Updated config.yaml pointing to the home and universities index pages
+	configYAML := `# Config for Krems Static Site
 website:
   url: "http://localhost:8080"
-  name: "Local Test Site"
+  name: "Krems Static Site"
 
 menu:
   - title: "Home"
     path: "index.md"
-  - title: "Topics"
-    path: "topics/index.md"
+  - title: "Universities"
+    path: "universities/index.md"
 `
-    if err := os.WriteFile("config.yaml", []byte(configYAML), 0644); err != nil {
-        fmt.Printf("Error writing config.yaml: %v\n", err)
-        os.Exit(1)
-    }
-    fmt.Println("Created: config.yaml")
-    fmt.Println("\nYour sample site structure has been created!")
-    fmt.Println("Next steps:")
-    fmt.Println("  1) Modify the markdown content in ./markdown")
-    fmt.Println("  2) Edit config.yaml as needed")
-    fmt.Println("  3) Run 'krems --build' to generate your static site!")
+	if err := os.WriteFile("config.yaml", []byte(configYAML), 0644); err != nil {
+		fmt.Printf("Error writing config.yaml: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println("Created: config.yaml")
+	fmt.Println("\nYour Krems sample site structure has been created!")
+	fmt.Println("Next steps:")
+	fmt.Println("  1) Modify the markdown content in ./markdown")
+	fmt.Println("  2) Edit config.yaml as needed")
+	fmt.Println("  3) Run 'krems --build' to generate your static site!")
 }
