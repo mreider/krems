@@ -1,5 +1,7 @@
 # Krems
 
+[A little blog that explains Krems](https://mreider.com/tech/krems-static-blog-generator/).
+
 **Krems** is a simple, lightweight static site generator written in Go. It converts Markdown files into responsive HTML pages, complete with navigation menus, optional blog listings, and an RSS feed. Think of it like Hugo or Jekyll, but stripped down to the essentials.
 
 ## Features
