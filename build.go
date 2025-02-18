@@ -333,7 +333,7 @@ func fixLinksAndImages(cache *BuildCache, page *PageData) []byte {
 			alt := string(sub[1])
 			imgPath := string(sub[2])
 			return []byte(fmt.Sprintf(
-				`<img src="%s" alt="%s" style="max-width:800px;width:100%%;height:auto;" class="mb-3 img-fluid"/>`,
+				`<img src="%s" alt="%s" style="max-width:800px;width:100%%;height:auto;" class="mb-3 img-fluid border border-1 border-dark"/>`,
 				imgPath, alt))
 		})
 
