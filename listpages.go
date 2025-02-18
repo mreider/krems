@@ -9,13 +9,13 @@ import (
 	"time"
 )
 
-// listPagesInDirectory => for type:list pages
+// listPagesInDirectory => for type:list pages at any level
 func listPagesInDirectory(relPath string) template.HTML {
 	if globalBuildCache == nil {
 		return ""
 	}
 
-	// Find the "listing" page itself
+	// 1. Find the listing page
 	var listingPage *PageData
 	for _, p := range globalBuildCache.Pages {
 		if p.RelPath == relPath {
@@ -27,29 +27,36 @@ func listPagesInDirectory(relPath string) template.HTML {
 		return ""
 	}
 
-	// Derive the directory of that listing page
+	// 2. Determine the directory for that page
 	dir := filepath.Dir(listingPage.RelPath)
-	// If it's ".", treat as "" for top-level
 	if dir == "." {
 		dir = ""
 	}
+	// fmt.Printf("[DEBUG] listingPage: %s, dir: %q\n", relPath, dir)
 
-	// Gather siblings in the same directory that have a valid date,
-	// skipping index pages themselves
+	// 3. Gather siblings with a valid date, skipping index pages
 	var siblings []*PageData
 	for _, p := range globalBuildCache.Pages {
-		// Check if p is in the same directory
-		if filepath.Dir(p.RelPath) == dir && !p.IsIndex && !p.FrontMatter.ParsedDate.IsZero() {
+		// Also handle top-level: e.g. filepath.Dir("krems_city_info.md") => "."
+		// so we unify '.' => '' to match the listing page
+		pDir := filepath.Dir(p.RelPath)
+		if pDir == "." {
+			pDir = ""
+		}
+
+		// if p is in the same dir, not an index, and has a date => sibling
+		if pDir == dir && !p.IsIndex && !p.FrontMatter.ParsedDate.IsZero() {
 			siblings = append(siblings, p)
 		}
+		// else fmt.Printf("[DEBUG] not-sibling: %s => pDir=%q\n", p.RelPath, pDir)
 	}
 
-	// Sort them descending by date
+	// 4. Sort descending by date
 	sort.Slice(siblings, func(i, j int) bool {
 		return siblings[i].FrontMatter.ParsedDate.After(siblings[j].FrontMatter.ParsedDate)
 	})
 
-	// Group by (Year => Month), then build HTML
+	// 5. Group by year=>month, then build HTML
 	groups := groupByYearThenMonth(siblings)
 
 	var sb strings.Builder
@@ -60,7 +67,6 @@ func listPagesInDirectory(relPath string) template.HTML {
 			sb.WriteString(fmt.Sprintf(`<h5 class="mb-2">%s</h5>`+"\n", mg.Month))
 			sb.WriteString(`<ul class="list-group mb-4">` + "\n")
 			for _, art := range mg.Pages {
-				// Build an absolute link => "/some_slug/"
 				outDir := FindPageByRelPath(globalBuildCache, art.RelPath)
 				link := "/" + outDir + "/"
 				sb.WriteString(fmt.Sprintf(
@@ -74,7 +80,7 @@ func listPagesInDirectory(relPath string) template.HTML {
 	return template.HTML(sb.String())
 }
 
-// groupByYearThenMonth lumps the siblings by year => month => pages
+// groupByYearThenMonth lumps pages by Year => Month => Pages
 func groupByYearThenMonth(pages []*PageData) []yearGroup {
 	yMap := make(map[int]map[time.Month][]*PageData)
 	for _, p := range pages {
@@ -86,27 +92,24 @@ func groupByYearThenMonth(pages []*PageData) []yearGroup {
 		yMap[y][m] = append(yMap[y][m], p)
 	}
 
-	// Sort years descending
+	// sort years descending
 	var years []int
-	for y := range yMap {
-		years = append(years, y)
+	for year := range yMap {
+		years = append(years, year)
 	}
 	sort.Sort(sort.Reverse(sort.IntSlice(years)))
 
 	var result []yearGroup
 	for _, yr := range years {
 		monthMap := yMap[yr]
-		// Collect all months
 		var months []time.Month
 		for mm := range monthMap {
 			months = append(months, mm)
 		}
-		// Sort months descending
 		sort.Slice(months, func(i, j int) bool {
 			return months[i] > months[j]
 		})
 
-		// Build the final structure
 		var mgs []monthGroup
 		for _, mm := range months {
 			mgs = append(mgs, monthGroup{
@@ -114,7 +117,6 @@ func groupByYearThenMonth(pages []*PageData) []yearGroup {
 				Pages: monthMap[mm],
 			})
 		}
-
 		result = append(result, yearGroup{
 			Year:   yr,
 			Months: mgs,
@@ -129,7 +131,7 @@ type yearGroup struct {
 	Months []monthGroup
 }
 
-// monthGroup => one month => slice of pages
+// monthGroup => one month => pages
 type monthGroup struct {
 	Month time.Month
 	Pages []*PageData
