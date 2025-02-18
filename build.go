@@ -712,7 +712,9 @@ const htmlTemplate = `<!DOCTYPE html>
 	<img src="/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
 {{end}}
 
-<h3 class="display-6 mb-4">{{if .Page.FrontMatter.Title}}{{.Page.FrontMatter.Title}}{{else}}{{.Config.Website.Name}}{{end}}</h3>
+{{if (ne .Page.FrontMatter.Title "")}}
+<h3 class="display-6 mb-4">{{.Page.FrontMatter.Title}}</h3>
+{{end}}
 {{if .Page.FrontMatter.Description}}
 <p class="text-muted mb-4">{{.Page.FrontMatter.Description}}</p>
 {{end}}
