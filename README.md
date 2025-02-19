@@ -81,7 +81,7 @@ On Windows, you can place `krems.exe` in a directory like `C:\Program Files\Krem
 Krems has three primary commands:
 
 1. **`krems --init`**  
-   Creates a starter directory structure with sample Markdown files, a `config.yaml`, and example images in a folder named `markdown/`. You’ll see a default site about “Mollusks” (which you can replace). This command embeds Bootstrap files as well, so your site is ready to go.
+   Creates a starter directory structure with sample Markdown files, a `config.yaml`, and example images in a folder named `markdown/`. You’ll see a default site (which you can replace). This command embeds Bootstrap files as well, so your site is ready to go.
 
 2. **`krems --build`**  
    Reads the `markdown/` directory and your `config.yaml`, then generates a static site in the `docs/` folder. That includes:  
