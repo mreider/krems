@@ -619,8 +619,12 @@ const htmlTemplate = `<!DOCTYPE html>
 	<meta name="description" content="{{.Page.FrontMatter.Description}}">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	{{if .Page.FrontMatter.Image}}
-	<meta property="og:image" content="{{.Page.FrontMatter.Image | trimPrefixSlash}}">
-	<meta name="twitter:image" content="{{.Page.FrontMatter.Image | trimPrefixSlash}}">
+	<meta property="og:image" content="{{.Config.Website.URL}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:image" content="{{.Config.Website.URL}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
 	{{end}}
 	<meta property="og:site_name" content="{{.Config.Website.Name}}">
 	<link rel="icon" href="/images/favicon.png" type="image/png">
