@@ -614,126 +614,153 @@ func imagePath(outputDir, img string) string {
 const htmlTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<title>{{if .Page.FrontMatter.Title}}{{.Page.FrontMatter.Title}} - {{end}}{{.Config.Website.Name}}</title>
-	<meta name="description" content="{{.Page.FrontMatter.Description}}">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	{{if .Page.FrontMatter.Image}}
-	<meta property="og:image" content="{{.Config.Website.URL}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
-	<meta property="og:image:width" content="1200" />
-	<meta property="og:image:height" content="630" />
+    <meta charset="UTF-8">
+    <title>{{if .Page.FrontMatter.Title}}{{.Page.FrontMatter.Title}} - {{end}}{{.Config.Website.Name}}</title>
+    <meta name="description" content="{{.Page.FrontMatter.Description}}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{if .Page.FrontMatter.Image}}
+    <meta property="og:image" content="{{.Config.Website.URL}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="{{.Config.Website.URL}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
+    {{end}}
+    <meta property="og:site_name" content="{{.Config.Website.Name}}">
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
 
-	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:image" content="{{.Config.Website.URL}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
-	{{end}}
-	<meta property="og:site_name" content="{{.Config.Website.Name}}">
-	<link rel="icon" href="/images/favicon.png" type="image/png">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <style>
+        /* Load custom font */
+        @font-face {
+            font-family: 'Tiempos';
+            src: url('/css/tiempos.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
 
-	<link rel="stylesheet" href="/css/bootstrap.min.css">
-	<style>
-	body{background: #FBF9F1;}
-	</style>
+        /* Apply the custom font globally */
+        :root {
+            --bs-body-font-family: 'Tiempos', serif;
+        }
+
+        /* Remove all background colors */
+        body, nav {
+            background-color: white !important;
+        }
+
+        /* Adjust font sizes subtly */
+        body {
+            font-size: 1.1rem;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+        }
+
+        /* Centered and well-spaced Quacker form */
+        .subscribe-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+    </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-light" style="background-color:#E5E1DA; margin-bottom:20px;">
-	<div class="container-fluid">
-		<a class="navbar-brand" href="/">
-			<img src="/images/favicon.png" alt="" width="30" height="30" class="d-inline-block align-text-top me-1">
-			{{.Config.Website.Name}}
-		</a>
-		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#kremsNavbar" aria-controls="kremsNavbar" aria-expanded="false" aria-label="Toggle navigation">
-			<span class="navbar-toggler-icon"></span>
-		</button>
-		<div class="collapse navbar-collapse" id="kremsNavbar">
-			<ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-				{{range $i, $label := .MenuItems}}
-				<li class="nav-item">
-					<a class="nav-link" href="{{index $.MenuTargets $i}}">{{$label}}</a>
-				</li>
-				{{end}}
-			</ul>
-		{{ if and .Config.Quacker (ne .Config.Quacker.Target "") }}
-		<form id="subscribe-form" action="https://{{.Config.Quacker.Target}}/subscribe" method="POST" class="d-flex ms-3">
-			<input type="hidden" name="owner" value="{{.Config.Quacker.SiteOwner}}">
-			<input type="hidden" name="domain" value="{{.Config.Quacker.Domain}}">
-			<div class="d-flex align-items-center gap-2" id="form-content">
-				<input type="email" class="form-control form-control-sm" id="email" name="email" placeholder="email" required>
-				<button type="submit" class="btn btn-secondary btn-sm">Subscribe</button>
-			</div>
-		</form>
-		<div id="subscribe-message" class="mt-3"></div>
 
-		<script>
-		document.getElementById('subscribe-form').addEventListener('submit', function(event) {
-			event.preventDefault();
-			
-			var form = document.getElementById('subscribe-form');
-			var messageDiv = document.getElementById('subscribe-message');
-
-			// Hide the form using Bootstrap's d-none class
-			form.classList.add('d-none');
-
-			// Clear previous messages
-			messageDiv.innerHTML = '';
-
-			var formData = new FormData(form);
-			fetch(form.action, {
-				method: 'POST',
-				body: formData
-			})
-			.then(response => {
-				if (response.ok) {
-					return response.text();
-				}
-				throw new Error('Subscription failed');
-			})
-			.then(message => {
-				messageDiv.innerHTML = '<div class="alert alert-success">' + message + '</div>';
-				setTimeout(() => {
-					messageDiv.innerHTML = '';  // Clear message
-					form.classList.remove('d-none'); // Show form again
-					form.reset();
-				}, 3000);
-			})
-			.catch(error => {
-				messageDiv.innerHTML = '<div class="alert alert-danger">' + error.message + '</div>';
-				setTimeout(() => {
-					messageDiv.innerHTML = '';  // Clear message
-					form.classList.remove('d-none'); // Show form again
-				}, 3000);
-			});
-		});
-		</script>
-
-		{{ end }}
-		</div>
-	</div>
+<nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="kremsNavbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {{range $i, $label := .MenuItems}}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{index $.MenuTargets $i}}">{{$label}}</a>
+                </li>
+                {{end}}
+            </ul>
+        </div>
+        <a class="navbar-brand" href="/">
+            {{.Config.Website.Name}}
+        </a>
+    </div>
 </nav>
 
 <div class="container mt-5 mb-5">
-{{if .Page.FrontMatter.Image}}
-	{{ $cleanImg := .Page.FrontMatter.Image | trimPrefixSlash }}
-	<img src="/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
-{{end}}
+    {{if .Page.FrontMatter.Image}}
+    {{ $cleanImg := .Page.FrontMatter.Image | trimPrefixSlash }}
+    <img src="/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
+    {{end}}
 
-{{if (ne .Page.FrontMatter.Title "")}}
-<h3 class="display-6 mb-4">{{.Page.FrontMatter.Title}}</h3>
-{{end}}
-{{if .Page.FrontMatter.Description}}
-<p class="text-muted mb-4">{{.Page.FrontMatter.Description}}</p>
-{{end}}
+    {{if (ne .Page.FrontMatter.Title "")}}
+    <h3 class="display-6 mb-4">{{.Page.FrontMatter.Title}}</h3>
+    {{end}}
+    {{if .Page.FrontMatter.Description}}
+    <p class="text-muted mb-4">{{.Page.FrontMatter.Description}}</p>
+    {{end}}
 
-{{if eq .Page.FrontMatter.Type "list"}}
-	{{listPagesInDirectory .Page.RelPath}}
-{{else}}
-	<div class="mb-5">
-		{{.Page.HTMLContent}}
-	</div>
-{{end}}
+    {{if eq .Page.FrontMatter.Type "list"}}
+        {{listPagesInDirectory .Page.RelPath}}
+    {{else}}
+        <div class="mb-5">
+            {{.Page.HTMLContent}}
+        </div>
+    {{end}}
 
-<footer class="text-center">
-	🏰 Generated with <a href="https://github.com/mreider/krems">Krems</a> 🏰
-</footer>
+    {{ if and .Config.Quacker (ne .Config.Quacker.Target "") }}
+    <div class="subscribe-container">
+        <form id="subscribe-form" action="https://{{.Config.Quacker.Target}}/subscribe" method="POST">
+            <input type="hidden" name="owner" value="{{.Config.Quacker.SiteOwner}}">
+            <input type="hidden" name="domain" value="{{.Config.Quacker.Domain}}">
+            <div class="d-flex justify-content-center align-items-center gap-2">
+                <input type="email" class="form-control form-control-sm w-auto" id="email" name="email" placeholder="email" required>
+                <button type="submit" class="btn btn-secondary btn-sm">Subscribe</button>
+            </div>
+        </form>
+        <div id="subscribe-message" class="mt-3"></div>
+    </div>
+
+    <script>
+    document.getElementById('subscribe-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        var form = document.getElementById('subscribe-form');
+        var messageDiv = document.getElementById('subscribe-message');
+
+        form.classList.add('d-none');
+        messageDiv.innerHTML = '';
+
+        var formData = new FormData(form);
+        fetch(form.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.text();
+            }
+            throw new Error('Subscription failed');
+        })
+        .then(message => {
+            messageDiv.innerHTML = '<div class="alert alert-success">' + message + '</div>';
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+                form.classList.remove('d-none');
+                form.reset();
+            }, 3000);
+        })
+        .catch(error => {
+            messageDiv.innerHTML = '<div class="alert alert-danger">' + error.message + '</div>';
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+                form.classList.remove('d-none');
+            }, 3000);
+        });
+    });
+    </script>
+    {{ end }}
+
+    <footer class="text-center mt-5">
+        🏰 Generated with <a href="https://github.com/mreider/krems">Krems</a> 🏰
+    </footer>
 </div>
 
 <script src="/js/bootstrap.js"></script>

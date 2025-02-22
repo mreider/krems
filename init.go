@@ -59,7 +59,9 @@ func handleInit() {
 			if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
 				return err
 			}
-		case strings.HasSuffix(trimmed, ".css") || strings.HasSuffix(trimmed, ".map"):
+		case strings.HasSuffix(trimmed, ".css"):
+			destPath = filepath.Join("markdown", "css", filepath.Base(trimmed))
+		case strings.HasSuffix(trimmed, ".woff2"):
 			destPath = filepath.Join("markdown", "css", filepath.Base(trimmed))
 		case strings.HasSuffix(trimmed, ".js"):
 			destPath = filepath.Join("markdown", "js", filepath.Base(trimmed))

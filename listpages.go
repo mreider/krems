@@ -70,7 +70,7 @@ func listPagesInDirectory(relPath string) template.HTML {
 				outDir := FindPageByRelPath(globalBuildCache, art.RelPath)
 				link := "/" + outDir + "/"
 				sb.WriteString(fmt.Sprintf(
-					`<li class="list-group-item"><a class="text-decoration-none" href="%s">%s</a></li>`+"\n",
+					`<li><a class="text-decoration-none" href="%s">%s</a></li>`+"\n",
 					link, art.FrontMatter.Title))
 			}
 			sb.WriteString("</ul>\n")
