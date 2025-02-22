@@ -658,6 +658,15 @@ const htmlTemplate = `<!DOCTYPE html>
             font-size: 1.8rem;
         }
 
+        /* Navbar adjustments */
+        .navbar-brand {
+            font-weight: bold;
+        }
+
+        .navbar {
+            justify-content: space-between;
+        }
+
         /* Centered and well-spaced Quacker form */
         .subscribe-container {
             text-align: center;
@@ -669,6 +678,13 @@ const htmlTemplate = `<!DOCTYPE html>
 
 <nav class="navbar navbar-expand-lg navbar-light">
     <div class="container-fluid">
+        <!-- Burger Menu (Still Functional) -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#kremsNavbar" 
+                aria-controls="kremsNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Links on the Left -->
         <div class="collapse navbar-collapse" id="kremsNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 {{range $i, $label := .MenuItems}}
@@ -678,6 +694,8 @@ const htmlTemplate = `<!DOCTYPE html>
                 {{end}}
             </ul>
         </div>
+
+        <!-- Website Title on the Right -->
         <a class="navbar-brand" href="/">
             {{.Config.Website.Name}}
         </a>
@@ -759,7 +777,7 @@ const htmlTemplate = `<!DOCTYPE html>
     {{ end }}
 
     <footer class="text-center mt-5">
-        🏰 Generated with <a href="https://github.com/mreider/krems">Krems</a> 🏰
+        Generated with <a href="https://github.com/mreider/krems">Krems</a>
     </footer>
 </div>
 
