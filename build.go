@@ -663,28 +663,42 @@ const htmlTemplate = `<!DOCTYPE html>
             font-weight: bold;
         }
 
-        /* Ensure the navbar is contained and aligned with content */
+        /* Ensure the navbar is aligned with content */
         .navbar-nav {
             width: auto;
         }
 
-        /* Add fixed-width container to navbar */
         .navbar {
             justify-content: space-between;
             width: 100%;
         }
 
-        /* Ensure the navbar links align with content */
+        /* Align navbar with content using the same container width */
         .navbar .container {
             max-width: 960px;
             margin: 0 auto;
             padding: 0 15px; /* Adds a bit of padding to prevent edge hugging */
         }
 
+        /* Make sure the menu items don't stretch */
+        .navbar .navbar-nav {
+            flex-direction: row;
+            align-items: center;
+        }
+
         /* Centered and well-spaced Quacker form */
         .subscribe-container {
             text-align: center;
             margin-bottom: 40px;
+        }
+
+        /* Fix the left align of content and navbar */
+        .container-lg {
+            max-width: 960px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 15px;
+            padding-right: 15px;
         }
     </style>
 </head>
@@ -718,7 +732,7 @@ const htmlTemplate = `<!DOCTYPE html>
 </nav>
 
 <!-- Content -->
-<div class="container mt-5 mb-5">
+<div class="container-lg mt-5 mb-5">
     {{if .Page.FrontMatter.Image}}
     {{ $cleanImg := .Page.FrontMatter.Image | trimPrefixSlash }}
     <img src="/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
