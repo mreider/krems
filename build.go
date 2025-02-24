@@ -658,16 +658,27 @@ const htmlTemplate = `<!DOCTYPE html>
             font-size: 1.8rem;
         }
 
-        /* Ensure navbar items stay within a fixed width */
+        /* Navbar adjustments */
+        .navbar-brand {
+            font-weight: bold;
+        }
+
+        /* Ensure the navbar is contained and aligned with content */
         .navbar-nav {
             width: auto;
         }
 
+        /* Add fixed-width container to navbar */
         .navbar {
             justify-content: space-between;
-            max-width: 960px; /* limit width */
-            margin-left: auto;
-            margin-right: auto;
+            width: 100%;
+        }
+
+        /* Ensure the navbar links align with content */
+        .navbar .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 15px; /* Adds a bit of padding to prevent edge hugging */
         }
 
         /* Centered and well-spaced Quacker form */
@@ -679,8 +690,9 @@ const htmlTemplate = `<!DOCTYPE html>
 </head>
 <body>
 
+<!-- Wrap the navbar in the container for consistency -->
 <nav class="navbar navbar-expand-lg navbar-light">
-    <div class="container-lg"> <!-- Changed from container-fluid to container-lg -->
+    <div class="container"> <!-- Added container class here for consistent alignment -->
         <!-- Burger Menu (Still Functional) -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#kremsNavbar" 
                 aria-controls="kremsNavbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -705,7 +717,8 @@ const htmlTemplate = `<!DOCTYPE html>
     </div>
 </nav>
 
-<div class="container-lg mt-5 mb-5"> <!-- Changed to container-lg -->
+<!-- Content -->
+<div class="container mt-5 mb-5">
     {{if .Page.FrontMatter.Image}}
     {{ $cleanImg := .Page.FrontMatter.Image | trimPrefixSlash }}
     <img src="/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
