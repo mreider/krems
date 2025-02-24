@@ -658,13 +658,16 @@ const htmlTemplate = `<!DOCTYPE html>
             font-size: 1.8rem;
         }
 
-        /* Navbar adjustments */
-        .navbar-brand {
-            font-weight: bold;
+        /* Ensure navbar items stay within a fixed width */
+        .navbar-nav {
+            width: auto;
         }
 
         .navbar {
             justify-content: space-between;
+            max-width: 960px; /* limit width */
+            margin-left: auto;
+            margin-right: auto;
         }
 
         /* Centered and well-spaced Quacker form */
@@ -677,7 +680,7 @@ const htmlTemplate = `<!DOCTYPE html>
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-light">
-    <div class="container-fluid">
+    <div class="container-lg"> <!-- Changed from container-fluid to container-lg -->
         <!-- Burger Menu (Still Functional) -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#kremsNavbar" 
                 aria-controls="kremsNavbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -702,7 +705,7 @@ const htmlTemplate = `<!DOCTYPE html>
     </div>
 </nav>
 
-<div class="container mt-5 mb-5">
+<div class="container-lg mt-5 mb-5"> <!-- Changed to container-lg -->
     {{if .Page.FrontMatter.Image}}
     {{ $cleanImg := .Page.FrontMatter.Image | trimPrefixSlash }}
     <img src="/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
@@ -760,7 +763,7 @@ const htmlTemplate = `<!DOCTYPE html>
         .then(message => {
             messageDiv.innerHTML = '<div class="alert alert-success">' + message + '</div>';
             setTimeout(() => {
-                messageDiv.innerHTML = '';
+                messageDiv.innerHTML = '';  // Clear message
                 form.classList.remove('d-none');
                 form.reset();
             }, 3000);
@@ -768,7 +771,7 @@ const htmlTemplate = `<!DOCTYPE html>
         .catch(error => {
             messageDiv.innerHTML = '<div class="alert alert-danger">' + error.message + '</div>';
             setTimeout(() => {
-                messageDiv.innerHTML = '';
+                messageDiv.innerHTML = '';  // Clear message
                 form.classList.remove('d-none');
             }, 3000);
         });
