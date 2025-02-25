@@ -686,6 +686,21 @@ const htmlTemplate = `<!DOCTYPE html>
             align-items: center;
         }
 
+        /* Make sure the navbar items in the collapsed view have space between them */
+        .navbar-collapse .navbar-nav {
+            margin-left: 10px;
+        }
+
+        .navbar .navbar-nav .nav-item {
+            margin-right: 15px;
+        }
+
+        /* Fix for bullets in content area, ensure they are inside */
+        ul {
+            padding-left: 20px; /* Indentation for the bullets */
+            margin-left: 0; /* Remove any negative margin */
+        }
+
         /* Centered and well-spaced Quacker form */
         .subscribe-container {
             text-align: center;
