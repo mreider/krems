@@ -65,7 +65,7 @@ func listPagesInDirectory(relPath string) template.HTML {
 		sb.WriteString(fmt.Sprintf(`<h3 class="mt-5 mb-3">%d</h3>`+"\n", yg.Year))
 		for _, mg := range yg.Months {
 			sb.WriteString(fmt.Sprintf(`<h5 class="mb-2">%s</h5>`+"\n", mg.Month))
-			sb.WriteString(`<ul class="list-group mb-4">` + "\n")
+			sb.WriteString(`<ul class="list-group mb-4" style="padding-left: 20px; margin-left: 0;">` + "\n")
 			for _, art := range mg.Pages {
 				outDir := FindPageByRelPath(globalBuildCache, art.RelPath)
 				link := "/" + outDir + "/"
