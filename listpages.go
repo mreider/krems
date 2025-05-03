@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/gosimple/slug"
 )
 
 // listPagesInDirectory => for type:list pages at any level
@@ -24,6 +26,19 @@ func listPagesInDirectory(relPath string) template.HTML {
 		}
 	}
 	if listingPage == nil {
+		// try to find index.md in the directory
+		dir := filepath.Dir(relPath)
+		if !strings.HasSuffix(dir, "index.md") {
+			dir = filepath.Join(dir, "index.md")
+		}
+		for _, p := range globalBuildCache.Pages {
+			if p.RelPath == dir {
+				listingPage = p
+				break
+			}
+		}
+	}
+	if listingPage == nil {
 		return ""
 	}
 
@@ -37,18 +52,40 @@ func listPagesInDirectory(relPath string) template.HTML {
 	// 3. Gather siblings with a valid date, skipping index pages
 	var siblings []*PageData
 	for _, p := range globalBuildCache.Pages {
-		// Also handle top-level: e.g. filepath.Dir("krems_city_info.md") => "."
-		// so we unify '.' => '' to match the listing page
-		pDir := filepath.Dir(p.RelPath)
-		if pDir == "." {
-			pDir = ""
-		}
+		if !p.IsIndex && !p.FrontMatter.ParsedDate.IsZero() {
+			include := true
 
-		// if p is in the same dir, not an index, and has a date => sibling
-		if pDir == dir && !p.IsIndex && !p.FrontMatter.ParsedDate.IsZero() {
-			siblings = append(siblings, p)
+			// Handle tag filtering
+			if len(listingPage.FrontMatter.TagFilter) > 0 {
+				include = false // Default to exclude
+				for _, pageTag := range p.FrontMatter.Tags {
+					for _, filterTag := range listingPage.FrontMatter.TagFilter {
+						if pageTag == filterTag {
+							include = true
+							break
+						}
+					}
+					if include {
+						break
+					}
+				}
+			}
+
+			// Handle author filtering - only if tag filtering passed or wasn't present
+			if include && len(listingPage.FrontMatter.AuthorFilter) > 0 {
+				include = false // Default to exclude
+				for _, filterAuthor := range listingPage.FrontMatter.AuthorFilter {
+					if p.FrontMatter.Author == filterAuthor {
+						include = true
+						break
+					}
+				}
+			}
+
+			if include {
+				siblings = append(siblings, p)
+			}
 		}
-		// else fmt.Printf("[DEBUG] not-sibling: %s => pDir=%q\n", p.RelPath, pDir)
 	}
 
 	// 4. Sort descending by date
@@ -69,9 +106,23 @@ func listPagesInDirectory(relPath string) template.HTML {
 			for _, art := range mg.Pages {
 				outDir := FindPageByRelPath(globalBuildCache, art.RelPath)
 				link := "/" + outDir + "/"
+				authorText := ""
+				if art.FrontMatter.Author != "" {
+					authorSlug := slug.Make(art.FrontMatter.Author)
+					authorText = fmt.Sprintf(` by <a href="/authors/%s/">%s</a>`, authorSlug, art.FrontMatter.Author)
+				}
+				tagsText := ""
+				if len(art.FrontMatter.Tags) > 0 {
+					var tags []string
+					for _, tag := range art.FrontMatter.Tags {
+						tagSlug := slug.Make(tag)
+						tags = append(tags, fmt.Sprintf(`<a href="/tags/%s/"><span class="badge bg-secondary">%s</span></a>`, tagSlug, tag))
+					}
+					tagsText = strings.Join(tags, " ")
+				}
 				sb.WriteString(fmt.Sprintf(
-					`<li><a class="text-decoration-none" href="%s">%s</a></li>`+"\n",
-					link, art.FrontMatter.Title))
+					`<li><a class="text-decoration-none" href="%s">%s</a> <span class="text-muted small">%s %s</span></li>`+"\n",
+					link, art.FrontMatter.Title, authorText, tagsText))
 			}
 			sb.WriteString("</ul>\n")
 		}

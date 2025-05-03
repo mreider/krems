@@ -25,6 +25,8 @@ func handleInit() {
 		"markdown/css",
 		"markdown/js",
 		"markdown/images",
+		"markdown/authors",
+		"markdown/tags",
 	}
 	for _, d := range dirs {
 		err := os.MkdirAll(d, 0755)
@@ -96,6 +98,10 @@ func handleInit() {
 	indexMD := `---
 title: "Krems Home Page"
 type: list
+tagFilter:
+  - about
+authorFilter:
+  - Matt
 ---
 `
 	err = os.WriteFile("markdown/index.md", []byte(indexMD), 0644)
@@ -110,6 +116,8 @@ type: list
 title: "Krems City Info"
 date: "2024-11-26"
 image: "/images/krems1.png"
+author: "Matt"
+tags: ["about"]
 ---
 Krems is a beautiful city in Austria known for its rich history, stunning architecture, and vibrant culture.
 Explore its winding streets, local markets, and historical landmarks.
@@ -126,6 +134,8 @@ Explore its winding streets, local markets, and historical landmarks.
 title: "Krems Travel Info"
 date: "2024-11-26"
 image: "/images/krems2.png"
+author: "Matt"
+tags: ["about"]
 ---
 Discover the best travel tips and attractions in Krems.
 From scenic river walks to local culinary delights, plan your perfect visit to this charming Austrian city.
@@ -141,6 +151,10 @@ From scenic river walks to local culinary delights, plan your perfect visit to t
 	univIndexMD := `---
 title: "Universities in Krems"
 type: list
+tagFilter:
+  - university
+authorFilter:
+  - Matt
 ---
 `
 	err = os.WriteFile("markdown/universities/index.md", []byte(univIndexMD), 0644)
@@ -155,6 +169,8 @@ type: list
 title: "University for Continuing Education Krems"
 date: "2024-11-26"
 image: "/images/uni1.png"
+author: "Matt"
+tags: ["university"]
 ---
 University for Continuing Education Krems is a leading institution in Krems, offering a diverse range of academic programs and cutting-edge research opportunities.
 `
@@ -170,6 +186,8 @@ University for Continuing Education Krems is a leading institution in Krems, off
 title: "IMC Krems University of Applied Sciences"
 date: "2024-11-26"
 image: "/images/uni2.png"
+author: "Matt"
+tags: ["university"]
 ---
 IMC Krems University of Applied Sciences is renowned for its innovative teaching methods and vibrant campus life, making it a hub of academic excellence in Krems.
 `
