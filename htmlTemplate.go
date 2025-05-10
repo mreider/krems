@@ -77,19 +77,38 @@ const htmlTemplate = `<!DOCTYPE html>
             padding: 0 15px; /* Adds a bit of padding to prevent edge hugging */
         }
 
-        /* Make sure the menu items don't stretch */
-        .navbar .navbar-nav {
-            flex-direction: row;
-            align-items: center;
+        /* Fix mobile menu layout to display vertically when collapsed */
+        @media (max-width: 991.98px) {
+            .navbar-collapse .navbar-nav {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                margin-left: 0 !important;
+            }
+            
+            .navbar-collapse .navbar-nav .nav-item {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+            
+            .navbar-collapse .nav-link {
+                padding: 8px 0;
+            }
         }
 
-        /* Make sure the navbar items in the collapsed view have space between them */
-        .navbar-collapse .navbar-nav {
-            margin-left: 10px;
-        }
-
-        .navbar .navbar-nav .nav-item {
-            margin-right: 15px;
+        /* Desktop menu layout */
+        @media (min-width: 992px) {
+            .navbar .navbar-nav {
+                flex-direction: row;
+                align-items: center;
+            }
+            
+            .navbar-collapse .navbar-nav {
+                margin-left: 10px;
+            }
+            
+            .navbar .navbar-nav .nav-item {
+                margin-right: 15px;
+            }
         }
 
         /* Fix for bullets in content area, ensure they are inside */
