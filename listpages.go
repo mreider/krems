@@ -62,7 +62,8 @@ func listPagesInDirectory(relPath string) template.HTML {
 		if len(listingPage.FrontMatter.AuthorFilter) > 0 {
 			include = false // Default to exclude
 			for _, filterAuthor := range listingPage.FrontMatter.AuthorFilter {
-				if p.FrontMatter.Author == filterAuthor {
+				// Case-insensitive comparison for author names
+				if strings.EqualFold(strings.TrimSpace(p.FrontMatter.Author), strings.TrimSpace(filterAuthor)) {
 					include = true
 					break
 				}
@@ -72,7 +73,8 @@ func listPagesInDirectory(relPath string) template.HTML {
 			include = false // Default to exclude
 			for _, pageTag := range p.FrontMatter.Tags {
 				for _, filterTag := range listingPage.FrontMatter.TagFilter {
-					if pageTag == filterTag {
+					// Case-insensitive comparison for tags
+					if strings.EqualFold(strings.TrimSpace(pageTag), strings.TrimSpace(filterTag)) {
 						include = true
 						break
 					}
