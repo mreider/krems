@@ -48,54 +48,55 @@ func listPagesInDirectory(relPath string) template.HTML {
 		dir = ""
 	}
 	
-	// 3. Gather siblings with a valid date, skipping index pages
+	// 3. Gather pages with a valid date, skipping index pages
 	var siblings []*PageData
 	for _, p := range globalBuildCache.Pages {
-			// Only include pages from the same directory as the listing page
+		// Skip index pages and pages without dates
+		if p.IsIndex || p.FrontMatter.ParsedDate.IsZero() {
+			continue
+		}
+		
+		include := true
+		
+		// For author pages, we need to include all posts by the author regardless of directory
+		if len(listingPage.FrontMatter.AuthorFilter) > 0 {
+			include = false // Default to exclude
+			for _, filterAuthor := range listingPage.FrontMatter.AuthorFilter {
+				if p.FrontMatter.Author == filterAuthor {
+					include = true
+					break
+				}
+			}
+		} else if len(listingPage.FrontMatter.TagFilter) > 0 {
+			// Handle tag filtering
+			include = false // Default to exclude
+			for _, pageTag := range p.FrontMatter.Tags {
+				for _, filterTag := range listingPage.FrontMatter.TagFilter {
+					if pageTag == filterTag {
+						include = true
+						break
+					}
+				}
+				if include {
+					break
+				}
+			}
+		} else {
+			// For regular list pages, only include pages from the same directory
 			pageDir := filepath.Dir(p.RelPath)
 			if pageDir == "." {
-					pageDir = ""
+				pageDir = ""
 			}
 			
 			// Check if page is in the same directory as the listing page
 			if pageDir != dir {
-					continue
+				include = false
 			}
-			
-			if !p.IsIndex && !p.FrontMatter.ParsedDate.IsZero() {
-					include := true
+		}
 
-					// Handle tag filtering
-					if len(listingPage.FrontMatter.TagFilter) > 0 {
-							include = false // Default to exclude
-							for _, pageTag := range p.FrontMatter.Tags {
-									for _, filterTag := range listingPage.FrontMatter.TagFilter {
-											if pageTag == filterTag {
-													include = true
-													break
-											}
-									}
-									if include {
-											break
-									}
-							}
-					}
-
-					// Handle author filtering - only if tag filtering passed or wasn't present
-					if include && len(listingPage.FrontMatter.AuthorFilter) > 0 {
-							include = false // Default to exclude
-							for _, filterAuthor := range listingPage.FrontMatter.AuthorFilter {
-									if p.FrontMatter.Author == filterAuthor {
-											include = true
-											break
-									}
-							}
-					}
-
-					if include {
-							siblings = append(siblings, p)
-					}
-			}
+		if include {
+			siblings = append(siblings, p)
+		}
 	}
 	
 	// 4. Sort descending by date

@@ -269,6 +269,7 @@ func initTemplateFuncs(t *template.Template) *template.Template {
 		"authorLink":           authorLink,
 		"tagsLine":             tagsLine,
 		"authorLine":           authorLine,
+		"dateDisplay":          dateDisplay,
 	})
 }
 

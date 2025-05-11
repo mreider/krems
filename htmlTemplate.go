@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"strings"
+	"time"
 
 	"github.com/gosimple/slug"
 )
@@ -169,9 +170,10 @@ const htmlTemplate = `<!DOCTYPE html>
     <img src="/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
     {{end}}
 
-    {{if (ne .Page.FrontMatter.Title "")}}
+	{{if (ne .Page.FrontMatter.Title "")}}
     <h3 class="display-6 mb-4">{{.Page.FrontMatter.Title}}</h3>
 	{{authorLine .Page.FrontMatter.Author}}
+	{{dateDisplay .Page.FrontMatter.ParsedDate}}
 	{{tagsLine .Page.FrontMatter.Tags}}
     {{end}}
     {{if .Page.FrontMatter.Description}}
@@ -277,4 +279,12 @@ func authorLine(author string) template.HTML {
 		return ""
 	}
 	return template.HTML(fmt.Sprintf(`by <a href="/authors/%s/">%s</a>`, slug.Make(author), author))
+}
+
+// dateDisplay formats the date in a nice format (Jan 1, 2025)
+func dateDisplay(date time.Time) template.HTML {
+	if date.IsZero() {
+		return ""
+	}
+	return template.HTML(fmt.Sprintf(`<div class="text-muted mb-2">%s</div>`, date.Format("Jan 2, 2006")))
 }
