@@ -58,15 +58,21 @@ func generateAuthorPage(cache *BuildCache, author string) error {
 	}
 	defer f.Close()
 
+	// Create a unique RelPath for this author page
+	authorRelPath := filepath.Join("authors", authorSlug, "index.md")
+	
 	pseudo := &PageData{
 		FrontMatter: PageFrontMatter{
 			Title:        fmt.Sprintf("Posts by %s", author),
 			Type:         "list",
 			AuthorFilter: []string{author}, // Filter by the current author
 		},
-		RelPath:   "index.md",
+		RelPath:   authorRelPath,
 		OutputDir: dir,
 	}
+	
+	// Add the pseudo page to the cache so listPagesInDirectory can find it
+	cache.Pages = append(cache.Pages, pseudo)
 
 	var menuItems []string
 	var menuTargets []string
@@ -125,15 +131,21 @@ func generateTagPage(cache *BuildCache, tag string) error {
 	}
 	defer f.Close()
 
+	// Create a unique RelPath for this tag page
+	tagRelPath := filepath.Join("tags", tagSlug, "index.md")
+	
 	pseudo := &PageData{
 		FrontMatter: PageFrontMatter{
 			Title:     fmt.Sprintf("Posts tagged with %s", tag),
 			Type:      "list",
 			TagFilter: []string{tag}, // Filter by the current tag
 		},
-		RelPath:   "index.md",
+		RelPath:   tagRelPath,
 		OutputDir: dir,
 	}
+	
+	// Add the pseudo page to the cache so listPagesInDirectory can find it
+	cache.Pages = append(cache.Pages, pseudo)
 
 	data := struct {
 		Config      *Config
