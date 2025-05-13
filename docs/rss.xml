@@ -1,43 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
 <channel>
-  <title>Krems Static Site</title>
-  <link>http://localhost:8080</link>
-  <description>RSS feed for Krems Static Site</description>
+  <title>Krems Example Site</title>
+  <link>https://localhost:8080</link>
+  <description>RSS feed for Krems Example Site</description>
   
 <item>
   <title>Krems City Info</title>
-  <link>http://localhost:8080/krems-city-info/</link>
+  <link>https://localhost:8080/krems-city-info/</link>
   <description></description>
   <pubDate>Tue, 26 Nov 2024 00:00:00 +0000</pubDate>
-  <enclosure url="http://localhost:8080/images/krems1.png" type="image/png"/>
+  <enclosure url="https://localhost:8080/images/krems1.png" type="image/png"/>
 </item>
 
 
 <item>
   <title>Krems Travel Info</title>
-  <link>http://localhost:8080/krems-travel-info/</link>
+  <link>https://localhost:8080/krems-travel-info/</link>
   <description></description>
   <pubDate>Tue, 26 Nov 2024 00:00:00 +0000</pubDate>
-  <enclosure url="http://localhost:8080/images/krems2.png" type="image/png"/>
+  <enclosure url="https://localhost:8080/images/krems2.png" type="image/png"/>
 </item>
 
 
 <item>
   <title>University for Continuing Education Krems</title>
-  <link>http://localhost:8080/universities/university-for-continuing-education-krems/</link>
+  <link>https://localhost:8080/universities/university-for-continuing-education-krems/</link>
   <description></description>
   <pubDate>Tue, 26 Nov 2024 00:00:00 +0000</pubDate>
-  <enclosure url="http://localhost:8080/images/uni1.png" type="image/png"/>
+  <enclosure url="https://localhost:8080/images/uni1.png" type="image/png"/>
 </item>
 
 
 <item>
   <title>IMC Krems University of Applied Sciences</title>
-  <link>http://localhost:8080/universities/imc-krems-university-of-applied-sciences/</link>
+  <link>https://localhost:8080/universities/imc-krems-university-of-applied-sciences/</link>
   <description></description>
   <pubDate>Tue, 26 Nov 2024 00:00:00 +0000</pubDate>
-  <enclosure url="http://localhost:8080/images/uni2.png" type="image/png"/>
+  <enclosure url="https://localhost:8080/images/uni2.png" type="image/png"/>
 </item>
 
 </channel>
