@@ -27,12 +27,7 @@ go.work.sum
 # Ignore the compiled binary
 krems
 
-# Ignore the docs build output
-docs/
-
 # Optionally ignore the generated scaffolding (if not committing source content)
-content/
-static/
 config.yaml
 
 .DS_Store

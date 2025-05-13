@@ -1,5 +1,5 @@
 website:
-  url: "https://mreider.github.io/krems/"
+  url: "https://localhost:8080"
   name: "Krems Example Site"
 
 menu:
