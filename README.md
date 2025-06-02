@@ -9,7 +9,7 @@
 - Minimal configuration: a single `config.yaml` for site name, URL, and menu structure
 - Friendly “front matter” in each Markdown file for title, description, etc.
 - Automatic generation of “list” pages that group sub-pages by date
-- Responsive output using Bootstrap (bundled automatically)
+- Responsive output using Bootstrap (bundled automatically by `krems --build`)
 - Integrated local server (`--run`) for quick previews
 - 404 page generation for GitHub Pages or other static hosts
 - RSS feed for dated pages
@@ -180,7 +180,6 @@ With this setup:
 Please note that the root of the `krems` repository itself now serves as the source material for the sample website. This sample site is automatically built and deployed (to the `main` branch's `docs/` folder, which is then typically served by GitHub Pages for `mreider.github.io/krems`) by the `.github/workflows/deploy-sample-and-telemetry.yaml` workflow.
 
 -   The `config.yaml` file located at the root of this repository is used for configuring this sample site.
--   If you run `krems --init` from the root of this repository, it will overwrite the existing `config.yaml` with a default one. This is generally fine if you intend to reset the sample configuration, but be aware of this if you're testing `init`.
 -   The main project `README.md` and other Go project files (`.go`, `go.mod`, etc.) are ignored by `krems` when it builds the sample site from the root.
 
 ---
@@ -250,29 +249,28 @@ On Windows, you can place `krems.exe` in a directory like `C:\Program Files\Krem
 
 ## Basic Usage
 
-Krems has three primary commands:
+Krems has two primary commands:
 
-1. **`krems --init`**  
-   Creates a starter directory structure with sample Markdown files, a `config.yaml`, and example `images/` and `js/` folders (if applicable for samples) directly in your current folder. Core CSS is handled internally by `krems` and is not part of the `init` output structure at the root.
+1.  **`krems --build`**  
+    Reads markdown files and assets (like `images/`, `js/`) from the current directory (and its subdirectories, excluding `docs/`, `.git/`, etc.) and your `config.yaml` (if present), then generates a static site in the `docs/` folder. This includes:
+    - Converting `.md` to `.html`
+    - Automatically generating necessary CSS (like Bootstrap) into `docs/css/`.
+    - Copying assets from `images/` and `js/` (if they exist at the root) into `docs/`.
+    - Building an RSS feed
+    - Creating a CNAME file for GitHub Pages (if a custom domain is in `config.yaml`)
+    - Generating a `404.html`
+    - Creating nice-looking Bootstrap-based pages with a responsive NAV bar
 
-2. **`krems --build`**  
-   Reads markdown files and assets (like `images/`, `js/`) from the current directory (and its subdirectories, excluding `docs/`, `.git/`, etc.) and your `config.yaml`, then generates a static site in the `docs/` folder. This includes:
-   - Converting `.md` to `.html`
-   - Automatically generating necessary CSS (like Bootstrap) into `docs/css/`.
-   - Copying assets from `images/` and `js/` (if they exist at the root) into `docs/`.
-   - Building an RSS feed
-   - Creating a CNAME file for GitHub Pages (if a custom domain is in `config.yaml`)
-   - Generating a `404.html`
-   - Creating nice-looking Bootstrap-based pages with a responsive NAV bar
-
-3. **`krems --run`**  
-   Spawns a local HTTP server to serve the contents of `docs/` on `http://localhost:8080`. It also logs requests (200, 404, etc.). Use this for a quick local preview before publishing your site.
+2.  **`krems --run`**  
+    Spawns a local HTTP server to serve the contents of `docs/` on `http://localhost:8080`. It also logs requests (200, 404, etc.). Use this for a quick local preview *after* running `krems --build`.
 
 ---
 
 ## Config File
 
-When you run `krems --init`, you get a `config.yaml` with a structure like this:
+A `config.yaml` file at the root of your project is used to configure your site's name, URL, and menu structure. If you don't have one and are using the GitHub Actions workflow described above, a basic one will be generated for you.
+
+A typical `config.yaml` looks like this:
 
 ```yaml
 website:
@@ -298,7 +296,7 @@ When you run `--build`, Krems locates each Markdown file referenced in the `menu
 
 ### Directory Structure (Post v0.2.0)
 
-`krems` now expects markdown files and asset folders (like `images/`, `css/`, `js/`) to be at the root of your project, not inside a `markdown/` subdirectory.
+`krems` now expects markdown files and asset folders (like `images/`, `js/`) to be at the root of your project.
 
 A typical structure might look like:
 
@@ -315,8 +313,6 @@ A typical structure might look like:
 - `config.yaml`
 
 Core CSS (Bootstrap) is automatically included by `krems` during the build process; you do not need to create or manage a `css/` folder at the root for these default styles. If you wish to add your *own* custom CSS, you would typically create a `custom.css` file (e.g., in a root `css/` folder you create yourself) and link to it from your HTML templates (an advanced customization).
-
-The `krems --init` command will set up a basic version of this structure, excluding a `css/` folder for core styles as `krems` handles that.
 
 ### Front Matter
 
@@ -358,9 +354,9 @@ When you’re satisfied, you can upload the `docs/` directory to GitHub Pages (o
 
 -   **Markdown and Asset Location:** `krems` (from v0.2.0 or the version incorporating these simplified workflow changes) no longer looks for content within a `markdown/` subdirectory.
     *   All your markdown files (`.md`) should be in the root of your project or in subdirectories directly under the root (e.g., `my-articles/article.md`).
-    *   Static assets (like `css/`, `js/`, `images/` folders) should also be at the root level.
+    *   User-provided static assets (like `js/`, `images/` folders) should also be at the root level. Core CSS is handled internally.
     *   If you run `krems` locally and an old `markdown/` directory is detected, `krems` will display a warning message guiding you to move your content. The build will proceed by looking for content at the root, ignoring the `markdown/` directory.
--   **`krems --init` Behavior:** The `init` command now creates its sample files and `config.yaml` directly in the current directory, not in a `markdown/` subfolder.
+-   **`krems --init` Command Removed:** The `--init` command has been removed. Users should now create their markdown files and optionally a `config.yaml` directly. The GitHub Actions workflow can generate a default `config.yaml` if one is not present.
 
 ---
 

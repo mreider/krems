@@ -7,7 +7,7 @@ import (
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("krems requires a command: --init, --build, or --run")
+		fmt.Println("krems requires a command: --build, --run, or --version")
 		os.Exit(1)
 	}
 
@@ -30,8 +30,8 @@ func main() {
 	}
 
 	switch os.Args[1] {
-	case "--init":
-		handleInit()
+	// case "--init": // Removed --init functionality
+	//	handleInit()
 	case "--build":
 		handleBuild()
 	case "--run":
@@ -40,11 +40,11 @@ func main() {
 		// Ideally, this version string is injected at build time.
 		// For now, we'll use a placeholder.
 		// You can replace "0.2.0-dev" with a more dynamic version later.
-		fmt.Println("Krems version 0.2.0-dev (simplified-workflow-changes)")
+		fmt.Println("Krems version 0.2.0-dev (simplified-workflow-changes)") // Placeholder, should be updated by build
 		os.Exit(0)
 	default:
 		fmt.Printf("Unknown command: %s\n", os.Args[1])
-		fmt.Println("Available commands: --init, --build, --run, --version")
+		fmt.Println("Available commands: --build, --run, --version")
 		os.Exit(1)
 	}
 }
