@@ -283,6 +283,7 @@ func initTemplateFuncs(t *template.Template) *template.Template {
 		"tagsLine":             tagsLine,
 		"authorLine":           authorLine,
 		"dateDisplay":          dateDisplay,
+		"sitePath":             sitePath, // Added sitePath
 	})
 }
 

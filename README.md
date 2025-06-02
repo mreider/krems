@@ -263,6 +263,7 @@ Krems has two primary commands:
 
 2.  **`krems --run`**  
     Spawns a local HTTP server to serve the contents of `docs/` on `http://localhost:8080`. It also logs requests (200, 404, etc.). Use this for a quick local preview *after* running `krems --build`.
+    *   **Note on `BasePath` and Local Preview:** If you have set a `basePath` in your `config.yaml` (e.g., for a GitHub Project Page like `/myrepo/`), `krems --run` will serve your site from `http://localhost:8080/`. However, the links within your site will be generated with the `basePath` (e.g., `/myrepo/css/style.css`). This means that asset links and sub-page navigation may appear broken during local preview with `krems --run` if a `basePath` is active. The deployed site on GitHub Pages will work correctly. For accurate local preview with a `basePath`, you would typically need to use a more advanced local server setup that can simulate the sub-path, or temporarily set `basePath: ""` for local builds.
 
 ---
 

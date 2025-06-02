@@ -179,10 +179,10 @@ func fixLinksAndImages(cache *BuildCache, page *PageData) []byte {
 
 											// The existing fmt.Sprintf gives "/%s/", so outDir is just the slug.
 											// We want {{BasePath}}/{{slug}}/
-											// If BasePath is "/bp", result is "/bp/slug/"
-											// If BasePath is "", result is "/slug/"
-											// This seems correct.
-											return []byte(fmt.Sprintf("[%s](%s/%s/)", linkText, cache.Config.Website.BasePath, outDir))
+											// We want the final path to be like /basePath/slug/
+											// sitePath expects a path like "/slug/"
+											targetPathForSitePath := "/" + outDir + "/"
+											return []byte(fmt.Sprintf("[%s](%s)", linkText, sitePath(targetPathForSitePath)))
 									}
 							}
 					}

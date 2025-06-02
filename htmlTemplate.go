@@ -17,22 +17,22 @@ const htmlTemplate = `<!DOCTYPE html>
     <meta name="description" content="{{.Page.FrontMatter.Description}}">
     <meta name="viewport" content="width:device-width, initial-scale=1.0">
     {{if .Page.FrontMatter.Image}}
-    <meta property="og:image" content="{{.Config.Website.URL}}{{.Config.Website.BasePath}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
+    <meta property="og:image" content="{{.Config.Website.URL}}{{sitePath (.Page.FrontMatter.Image | trimPrefixSlash)}}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="{{.Config.Website.URL}}{{.Config.Website.BasePath}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
+    <meta name="twitter:image" content="{{.Config.Website.URL}}{{sitePath (.Page.FrontMatter.Image | trimPrefixSlash)}}" />
     {{end}}
     <meta property="og:site_name" content="{{.Config.Website.Name}}">
-    <link rel="icon" href="{{.Config.Website.BasePath}}/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="{{sitePath "/images/favicon.ico"}}" type="image/x-icon">
 
-    <link rel="stylesheet" href="{{.Config.Website.BasePath}}/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{sitePath "/css/bootstrap.min.css"}}">
     <style>
         /* Load custom font */
         @font-face {
             font-family: 'Tiempos';
-            src: url('{{.Config.Website.BasePath}}/css/tiempos.woff2') format('woff2');
+            src: url('{{sitePath "/css/tiempos.woff2"}}') format('woff2');
             font-weight: normal;
             font-style: normal;
         }
@@ -148,16 +148,16 @@ const htmlTemplate = `<!DOCTYPE html>
         <!-- Navbar Links on the Left -->
         <div class="collapse navbar-collapse" id="kremsNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                {{range $i, $label := .MenuItems}}
+                {{range $i, $targetPath := .MenuTargets}}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{$.Config.Website.BasePath}}{{index $.MenuTargets $i}}">{{$label}}</a>
+                    <a class="nav-link" href="{{sitePath $targetPath}}">{{index $.MenuItems $i}}</a>
                 </li>
                 {{end}}
             </ul>
         </div>
 
         <!-- Website Title on the Right -->
-        <a class="navbar-brand" href="{{.Config.Website.BasePath}}/">
+        <a class="navbar-brand" href="{{sitePath "/"}}">
             {{.Config.Website.Name}}
         </a>
     </div>
@@ -167,7 +167,7 @@ const htmlTemplate = `<!DOCTYPE html>
 <div class="container-lg mt-5 mb-5">
     {{if .Page.FrontMatter.Image}}
     {{ $cleanImg := .Page.FrontMatter.Image | trimPrefixSlash }}
-    <img src="{{$.Config.Website.BasePath}}/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
+    <img src="{{sitePath $cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
     {{end}}
 
 	{{if (ne .Page.FrontMatter.Title "")}}
@@ -246,45 +246,43 @@ const htmlTemplate = `<!DOCTYPE html>
     </footer>
 </div>
 
-<script src="{{.Config.Website.BasePath}}/js/bootstrap.js"></script>
+<script src="{{sitePath "/js/bootstrap.js"}}"></script>
 </body>
 </html>
 `
 
 // authorLink generates a link to the author's page
 func authorLink(author string) template.HTML {
-	if author == "" || globalBuildCache == nil || globalBuildCache.Config == nil {
+	if author == "" {
 		return ""
 	}
 	authorSlug := slug.Make(author)
-	basePath := globalBuildCache.Config.Website.BasePath
-	// Ensure no double slashes if basePath is empty, but always a leading slash if basePath is not empty.
-	// And ensure a trailing slash for the directory.
-	return template.HTML(fmt.Sprintf(` by <a href="%s/authors/%s/">%s</a>`, basePath, authorSlug, author))
+	// Note: sitePath expects paths like "/authors/..."
+	return template.HTML(fmt.Sprintf(` by <a href="%s">%s</a>`, sitePath("/authors/"+authorSlug+"/"), author))
 }
 
 // tagsLine generates a list of tags with links to tag pages
 func tagsLine(tags []string) template.HTML {
-	if len(tags) == 0 || globalBuildCache == nil || globalBuildCache.Config == nil {
+	if len(tags) == 0 {
 		return ""
 	}
-	basePath := globalBuildCache.Config.Website.BasePath
 	var tagLinks []string
 	for _, tag := range tags {
 		tagSlug := slug.Make(tag)
-		tagLinks = append(tagLinks, fmt.Sprintf(`<a href="%s/tags/%s/"><span class="badge bg-secondary">%s</span></a>`, basePath, tagSlug, tag))
+		// Note: sitePath expects paths like "/tags/..."
+		tagLinks = append(tagLinks, fmt.Sprintf(`<a href="%s"><span class="badge bg-secondary">%s</span></a>`, sitePath("/tags/"+tagSlug+"/"), tag))
 	}
 	return template.HTML(strings.Join(tagLinks, " "))
 }
 
 // authorLine generates the author line with a link to the author's page
 func authorLine(author string) template.HTML {
-	if author == "" || globalBuildCache == nil || globalBuildCache.Config == nil {
+	if author == "" {
 		return ""
 	}
-	basePath := globalBuildCache.Config.Website.BasePath
 	authorSlug := slug.Make(author)
-	return template.HTML(fmt.Sprintf(`by <a href="%s/authors/%s/">%s</a>`, basePath, authorSlug, author))
+	// Note: sitePath expects paths like "/authors/..."
+	return template.HTML(fmt.Sprintf(`by <a href="%s">%s</a>`, sitePath("/authors/"+authorSlug+"/"), author))
 }
 
 // dateDisplay formats the date in a nice format (Jan 1, 2025)
@@ -293,4 +291,47 @@ func dateDisplay(date time.Time) template.HTML {
 		return ""
 	}
 	return template.HTML(fmt.Sprintf(`<div class="text-muted mb-2">%s</div>`, date.Format("Jan 2, 2006")))
+}
+
+// sitePath prepends the BasePath to a given path, ensuring correct slash handling.
+// path argument should typically start with a slash (e.g., "/css/style.css", "/my-page/").
+func sitePath(path string) string {
+	if globalBuildCache == nil || globalBuildCache.Config == nil {
+		// Fallback if cache not ready, though should not happen in normal execution
+		return path 
+	}
+	basePath := globalBuildCache.Config.Website.BasePath // e.g., "/krems" or ""
+
+	// Ensure basePath is clean (no trailing slash if not root, unless it IS the root path "/")
+	// Ensure path starts with a slash if not empty
+	// This logic aims for:
+	// basePath="/krems", path="/css/style.css" -> "/krems/css/style.css"
+	// basePath="", path="/css/style.css" -> "/css/style.css"
+	// basePath="/krems", path="/" -> "/krems/" (for homepage)
+	// basePath="", path="/" -> "/" (for homepage)
+
+	// Normalize path to always start with a slash if it's not empty
+	if path != "" && !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+	
+	// If basePath is empty or just "/", effectively no prefix needed or path is already root-relative
+	if basePath == "" {
+		return path
+	}
+
+	// If basePath is like "/krems"
+	// Remove trailing slash from basePath if it exists and isn't the only char
+	cleanBasePath := strings.TrimSuffix(basePath, "/")
+	
+	// If path is just "/", append to cleaned basePath (e.g. /krems + / -> /krems/)
+	if path == "/" {
+		if cleanBasePath == "" { // Original basePath was "/"
+			return "/"
+		}
+		return cleanBasePath + "/"
+	}
+
+	// Standard join: /krems + /css/style.css -> /krems/css/style.css
+	return cleanBasePath + path
 }
