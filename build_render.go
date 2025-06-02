@@ -189,42 +189,16 @@ func create404Page(cache *BuildCache) error {
 		OutputDir: "docs",
 	}
 
-	homePathFor404 := cache.Config.Website.BasePath + "/"
+	var homeLinkFor404Page string
 	if cache.Config.Website.BasePath == "" {
-		// Ensure it's just a single slash if BasePath is empty
-		homePathFor404 = "/"
-	} else if !strings.HasSuffix(cache.Config.Website.BasePath, "/") {
-		// Ensure BasePath (if not empty) ends with a slash for consistency with other links
-		// This might be redundant if BasePath is always stored like "/krems" or ""
-		// but good for safety. However, other links add it: {{BasePath}}/slug/
-		// So, if BasePath is /krems, then /krems/ is correct for home.
-		// If BasePath is "", then / is correct.
-		// The template uses {{.Config.Website.BasePath}}/, so let's match that.
-		// If BasePath is /foo, then /foo/. If BasePath is "", then /.
-		// This is already handled by `href="{{.Config.Website.BasePath}}/"` in the main template.
-		// So, for consistency:
-		// homePathFor404 = cache.Config.Website.BasePath 
-		// if homePathFor404 != "" && !strings.HasSuffix(homePathFor404, "/") {
-		// 	homePathFor404 += "/"
-		// } else if homePathFor404 == "" {
-		//  homePathFor404 = "/"
-		// }
-		// This logic is simpler:
-		// if BasePath is "/foo", then "/foo/"
-		// if BasePath is "", then "/"
+		homeLinkFor404Page = "/"
+	} else {
+		// Ensure BasePath like "/krems" becomes "/krems/" for the link
+		homeLinkFor404Page = strings.TrimSuffix(cache.Config.Website.BasePath, "/") + "/"
 	}
-	// The navbar brand link uses {{.Config.Website.BasePath}}/, so let's be consistent.
-	// If BasePath is "/foo", this becomes "/foo/"
-	// If BasePath is "", this becomes "/"
-	// This logic for homePathFor404 was a bit convoluted and not strictly necessary
-	// as the fmt.Sprintf below handles it well with cache.Config.Website.BasePath + "/"
-	// (empty string + "/" is still "/", and "/foo" + "/" is "/foo/")
-	// However, the direct use of BasePath in Sprintf is fine.
-	// The critical fix is removing the misplaced '}'
 	pseudo.HTMLContent = template.HTML(fmt.Sprintf(`
-<p>Go <a href="%s/">home</a> to find what you're looking for</p>
-`, cache.Config.Website.BasePath))
-// Removed erroneous closing brace that was here.
+<p>Go <a href="%s">home</a> to find what you're looking for</p>
+`, homeLinkFor404Page))
 
 	var menuItems []string
 	var menuTargets []string
