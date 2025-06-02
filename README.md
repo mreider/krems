@@ -7,7 +7,7 @@ Krems is a straightforward static site generator designed for creating clean, fa
 - **Markdown-Powered**: Write your posts and pages in familiar Markdown.
 - **Fixed Styling**: Comes with a clean, responsive design (Bootstrap CSS) included, so you don't have to worry about CSS.
 - **All-Inclusive**: Generates HTML, navigation, RSS feeds, and handles assets.
-- **Obsidian Friendly**: An Obsidian plugin is planned to make content creation even smoother.
+- **Obsidian Friendly**: An Obsidian plugin is coming soon.
 
 ## 2. How It Works: Get Started with the Example Site
 
@@ -25,28 +25,20 @@ The easiest way to understand Krems is to explore the example site.
 
 To build the site from the markdown files into static HTML:
 
-- If you have Krems installed globally:
   ```bash
   krems --build
   ```
-- If you are running Krems from its source code (e.g., developing Krems itself):
-  ```bash
-  go run . --build
-  ```
+
 This command will generate the website into a `docs/` folder.
 
 ## 4. Run It Locally
 
 To preview your site locally after building it:
 
-- If you have Krems installed globally:
   ```bash
   krems --run
   ```
-- If you are running Krems from its source code:
-  ```bash
-  go run . --run
-  ```
+
 This will start a local web server, typically at `http://localhost:8080`. The `krems --run` command automatically rebuilds the site using settings suitable for local development (like `devPath: "/"` in your `config.yaml`).
 
 ## 5. Deploy Your Own Site with GitHub Pages
@@ -73,7 +65,7 @@ You can easily host your Krems site for free using GitHub Pages. The `krems-exam
 3.  **GitHub Actions Workflow:**
     The `krems-example` site includes a GitHub Actions workflow file (in `.github/workflows/`). When you push code to your repository's main branch, this workflow will:
     *   Automatically build your Krems site.
-    *   Deploy the contents of the `docs/` folder to a special `gh-pages` branch in your repository.
+    *   Deploy the contents to a special `gh-pages` branch in your repository.
 
 4.  **Configure GitHub Pages:**
     *   In your GitHub repository, go to "Settings" > "Pages".
