@@ -1,11 +1,6 @@
 name: Build and Deploy Krems Site
-
 on:
-  push:
-    branches:
-      - main # Or user's default branch
   workflow_dispatch: # Allows manual triggering
-
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
