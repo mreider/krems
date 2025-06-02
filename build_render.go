@@ -357,7 +357,7 @@ func initTemplateFuncs(t *template.Template, cache *BuildCache, siteBuildRoot st
 		"tagsLine":             tagsLine,
 		"authorLine":           authorLine,
 		"dateDisplay":          dateDisplay,
-		"sitePath":             func(p string) string { return sitePath(filepath.ToSlash(filepath.Join(cache.Config.Website.BasePath, p))) },
+		"sitePath":             sitePath, // Directly use the sitePath Go function
 	})
 }
 
