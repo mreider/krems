@@ -20,29 +20,16 @@ jobs:
         with:
           fetch-depth: 0 # Important for committing back config.yaml
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21' # Specify your Go version
 
-      - name: Download latest Krems binary
-        id: download_krems
+      - name: Build Krems from source
         run: |
-          set -e 
-          KREMS_ASSET_NAME="krems-linux-amd64" 
-          LATEST_KREMS_URL=$(curl -s https://api.github.com/repos/mreider/krems/releases/latest | \
-                             jq -r ".assets[] | select(.name | endswith(\"${KREMS_ASSET_NAME}\")) | .browser_download_url")
-
-          if [ -z "$LATEST_KREMS_URL" ] || [ "$LATEST_KREMS_URL" == "null" ]; then
-            echo "Error: Could not find ${KREMS_ASSET_NAME} in the latest release of mreider/krems."
-            echo "Please check asset naming and availability. Attempting fallback to v0.1.11 as an example."
-            # Fallback URL - replace with a specific known good version if needed
-            LATEST_KREMS_URL="https://github.com/mreider/krems/releases/download/v0.1.11/krems-linux-amd64"
-            # exit 1 # Or use a fallback
-          fi
-          
-          echo "Downloading Krems from: $LATEST_KREMS_URL"
-          curl -sL -o krems "$LATEST_KREMS_URL"
+          go build -o krems .
           chmod +x ./krems
-          echo "Krems version: $(./krems --version || echo 'version flag not supported or krems not executable')"
+          echo "Krems version from source: $(./krems --version || echo 'version flag not supported or krems not executable')"
 
       - name: Configure Git User
         run: |
@@ -60,24 +47,42 @@ jobs:
             echo "config.yaml not found. Generating initial version..."
             echo "config_existed=false" >> $GITHUB_OUTPUT
             
-            SITE_NAME="My Blog"
+            SITE_NAME="My Blog" # Default for user sites
+            # For mreider/krems itself, config.yaml should exist and this block will be skipped.
+            # If this workflow is used in a new repo without config.yaml:
             REPO_OWNER=$(echo "${{ github.repository }}" | cut -d'/' -f1)
             REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
-            WEBSITE_URL="https://${REPO_OWNER}.github.io/${REPO_NAME}/"
+            
+            # Determine BasePath for GitHub Pages project sites
+            # If it's a user page (REPO_NAME == REPO_OWNER.github.io), BasePath is empty
+            # Otherwise, BasePath is /REPO_NAME
+            BASE_PATH=""
+            if [[ "${REPO_NAME,,}" != "${REPO_OWNER,,}.github.io" ]]; then
+              BASE_PATH="/${REPO_NAME}"
+            fi
+            
+            WEBSITE_URL="https://${REPO_OWNER}.github.io${BASE_PATH}"
+
 
             echo "name: \"${SITE_NAME}\"" > config.yaml
-            echo "website: \"${WEBSITE_URL}\"" >> config.yaml
+            echo "website:" >> config.yaml
+            echo "  url: \"${WEBSITE_URL}\"" >> config.yaml
+            echo "  name: \"${SITE_NAME}\"" >> config.yaml
+            echo "  basePath: \"${BASE_PATH}\"" >> config.yaml
             echo "menu:" >> config.yaml
             echo "  - name: Home" >> config.yaml
             echo "    url: /" >> config.yaml
 
+            # Auto-generate menu items from top-level directories
             find . -maxdepth 1 -mindepth 1 -type d \
               ! -name ".*" \
               ! -name "docs" \
+              ! -name "assets" \
               ! -name "node_modules" \
               ! -name "vendor" \
               -print0 | while IFS= read -r -d $'\0' dir; do
               DIR_NAME=$(basename "$dir")
+              # Capitalize first letter and replace hyphens/underscores with spaces
               MENU_NAME=$(echo "$DIR_NAME" | sed -e 's/[_-]/ /g' -e 's/\b\(.\)/\u\1/g')
               echo "  - name: \"${MENU_NAME}\"" >> config.yaml
               echo "    url: /${DIR_NAME}/" >> config.yaml
@@ -98,48 +103,46 @@ jobs:
       - name: Run Krems to build website
         run: |
           set -e
-          echo "Building website with Krems..."
-          ./krems --build # Explicitly use --build command
+          echo "Building website with locally built Krems..."
+          ./krems --build 
           echo "Website built. Contents of ./docs:"
           ls -R docs
 
       - name: Generate CNAME file for custom domain (if applicable)
         run: |
           set -e
-          WEBSITE_LINE=$(grep '^website:' config.yaml || echo "")
-          
-          if [ -z "$WEBSITE_LINE" ]; then
-            echo "Warning: 'website:' field not found in config.yaml. Cannot determine CNAME."
-            exit 0 
-          fi
-
-          WEBSITE_URL_FROM_CONFIG=$(echo "$WEBSITE_LINE" | sed -n 's/website: "\(.*\)"/\1/p')
-          if [ -z "$WEBSITE_URL_FROM_CONFIG" ]; then
-             WEBSITE_URL_FROM_CONFIG=$(echo "$WEBSITE_LINE" | sed -n "s/website: '\(.*\)'/\1/p") 
-          fi
-          if [ -z "$WEBSITE_URL_FROM_CONFIG" ]; then
-             WEBSITE_URL_FROM_CONFIG=$(echo "$WEBSITE_LINE" | sed -n 's/website: \(.*\)/\1/p')
-          fi
-
-          if [ -z "$WEBSITE_URL_FROM_CONFIG" ]; then
-            echo "Warning: Could not parse 'website' URL from config.yaml. CNAME step skipped."
-            echo "Line was: $WEBSITE_LINE"
+          # Check if config.yaml exists; if not, this step might not be relevant
+          if [ ! -f config.yaml ]; then
+            echo "config.yaml not found, skipping CNAME generation."
             exit 0
           fi
 
-          echo "Website URL from config: $WEBSITE_URL_FROM_CONFIG"
+          WEBSITE_LINE=$(grep '^  url:' config.yaml || echo "") # Assuming url is under website:
+          BASEPATH_LINE=$(grep '^  basePath:' config.yaml || echo "")
 
-          if [[ "$WEBSITE_URL_FROM_CONFIG" != *"github.io"* ]] && [[ "$WEBSITE_URL_FROM_CONFIG" == "http"* ]]; then
-            CUSTOM_DOMAIN=$(echo "$WEBSITE_URL_FROM_CONFIG" | sed -e 's|^https\?://||' -e 's|/$||' -e 's|/.*$||')
-            if [ -n "$CUSTOM_DOMAIN" ]; then
-              echo "Custom domain detected: $CUSTOM_DOMAIN. Creating CNAME file."
-              echo "$CUSTOM_DOMAIN" > docs/CNAME
-              echo "CNAME file created in docs/ with content: $CUSTOM_DOMAIN"
-            else
-              echo "Custom domain format in config.yaml is not as expected, or empty. No CNAME generated."
+          WEBSITE_URL_FROM_CONFIG=$(echo "$WEBSITE_LINE" | sed -n 's/  url: "\(.*\)"/\1/p')
+          if [ -z "$WEBSITE_URL_FROM_CONFIG" ]; then WEBSITE_URL_FROM_CONFIG=$(echo "$WEBSITE_LINE" | sed -n "s/  url: '\(.*\)'/\1/p"); fi
+          if [ -z "$WEBSITE_URL_FROM_CONFIG" ]; then WEBSITE_URL_FROM_CONFIG=$(echo "$WEBSITE_LINE" | sed -n 's/  url: \(.*\)/\1/p'); fi
+
+          # Extract domain from WEBSITE_URL_FROM_CONFIG for CNAME
+          # This logic assumes WEBSITE_URL_FROM_CONFIG is the full URL like https://example.com or https://user.github.io/repo
+          
+          # Check if it's a custom domain (i.e., not a github.io URL if we are NOT generating for a user page)
+          # For CNAME, we only care if the URL is not a github.io one.
+          DOMAIN_FOR_CNAME=""
+          if [[ "$WEBSITE_URL_FROM_CONFIG" == "http"* ]]; then
+            TEMP_DOMAIN=$(echo "$WEBSITE_URL_FROM_CONFIG" | sed -e 's|^https\?://||' -e 's|/.*$||') # Extracts host part
+            if [[ "$TEMP_DOMAIN" != *".github.io"* ]]; then
+              DOMAIN_FOR_CNAME=$TEMP_DOMAIN
             fi
+          fi
+          
+          if [ -n "$DOMAIN_FOR_CNAME" ]; then
+            echo "Custom domain for CNAME detected: $DOMAIN_FOR_CNAME"
+            echo "$DOMAIN_FOR_CNAME" > docs/CNAME
+            echo "CNAME file created in docs/ with content: $DOMAIN_FOR_CNAME"
           else
-            echo "Using default GitHub Pages URL or non-HTTP URL. No CNAME file needed. Removing if exists."
+            echo "Not a custom domain or URL not parsable for CNAME. No CNAME file generated. Removing if exists."
             rm -f docs/CNAME
           fi
 
@@ -148,9 +151,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./docs
-          publish_branch: gh-pages # Deploy to the gh-pages branch
+          publish_branch: gh-pages 
           user_name: 'github-actions[bot]'
           user_email: 'github-actions[bot]@users.noreply.github.com'
           commit_message: 'Deploy: ${{ github.event.head_commit.message }} [skip ci]'
-          # force_orphan: true # Optional: Creates a clean history on gh-pages branch each time
-          # cname: ${{ steps.generate_config.outputs.custom_domain_for_cname }} # If CNAME is determined earlier
