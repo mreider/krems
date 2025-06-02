@@ -118,24 +118,30 @@ func listPagesInDirectory(relPath string) template.HTML {
 			sb.WriteString(`<ul class="list-group mb-4" style="padding-left: 20px; margin-left: 0;">` + "\n")
 			for _, art := range mg.Pages {
 				outDir := FindPageByRelPath(globalBuildCache, art.RelPath)
-				link := "/" + outDir + "/"
+				// Construct the path part first, then pass to sitePath
+				pageLinkPath := "/" + outDir + "/"
+				finalPageLink := sitePath(pageLinkPath)
+				
 				authorText := ""
 				if art.FrontMatter.Author != "" {
 					authorSlug := slug.Make(art.FrontMatter.Author)
-					authorText = fmt.Sprintf(` by <a href="/authors/%s/">%s</a>`, authorSlug, art.FrontMatter.Author)
+					authorLinkPath := "/authors/" + authorSlug + "/"
+					authorText = fmt.Sprintf(` by <a href="%s">%s</a>`, sitePath(authorLinkPath), art.FrontMatter.Author)
 				}
+				
 				tagsText := ""
 				if len(art.FrontMatter.Tags) > 0 {
-					var tags []string
+					var tagLinks []string
 					for _, tag := range art.FrontMatter.Tags {
 						tagSlug := slug.Make(tag)
-						tags = append(tags, fmt.Sprintf(`<a href="/tags/%s/"><span class="badge bg-secondary">%s</span></a>`, tagSlug, tag))
+						tagLinkPath := "/tags/" + tagSlug + "/"
+						tagLinks = append(tagLinks, fmt.Sprintf(`<a href="%s"><span class="badge bg-secondary">%s</span></a>`, sitePath(tagLinkPath), tag))
 					}
-					tagsText = strings.Join(tags, " ")
+					tagsText = strings.Join(tagLinks, " ")
 				}
 				sb.WriteString(fmt.Sprintf(
 					`<li><a class="text-decoration-none" href="%s">%s</a> <span class="text-muted small">%s %s</span></li>`+"\n",
-					link, art.FrontMatter.Title, authorText, tagsText))
+					finalPageLink, art.FrontMatter.Title, authorText, tagsText))
 			}
 			sb.WriteString("</ul>\n")
 		}
