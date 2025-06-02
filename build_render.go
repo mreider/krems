@@ -216,10 +216,15 @@ func create404Page(cache *BuildCache) error {
 	// The navbar brand link uses {{.Config.Website.BasePath}}/, so let's be consistent.
 	// If BasePath is "/foo", this becomes "/foo/"
 	// If BasePath is "", this becomes "/"
+	// This logic for homePathFor404 was a bit convoluted and not strictly necessary
+	// as the fmt.Sprintf below handles it well with cache.Config.Website.BasePath + "/"
+	// (empty string + "/" is still "/", and "/foo" + "/" is "/foo/")
+	// However, the direct use of BasePath in Sprintf is fine.
+	// The critical fix is removing the misplaced '}'
 	pseudo.HTMLContent = template.HTML(fmt.Sprintf(`
 <p>Go <a href="%s/">home</a> to find what you're looking for</p>
 `, cache.Config.Website.BasePath))
-	}
+// Removed erroneous closing brace that was here.
 
 	var menuItems []string
 	var menuTargets []string
