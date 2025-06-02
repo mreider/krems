@@ -55,5 +55,5 @@ jobs:
       - name: Commit and push changes
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
-          git commit -m "Automatically rebuild site with latest Krems"
+          git commit -m "Automatically rebuild site with latest Krems [skip ci]"
           git push

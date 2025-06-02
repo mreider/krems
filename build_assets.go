@@ -7,12 +7,53 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"embed" // Added embed here
+	"fmt"   // Added fmt here
 )
 
+//go:embed assets/css/bootstrap.min.css
+var bootstrapCSS embed.FS
+
+//go:embed assets/css/tiempos.woff2
+var tiemposFont embed.FS
+
+func createInternalCSS(outputBaseDir string) error {
+	cssDir := filepath.Join(outputBaseDir, "css")
+	if err := os.MkdirAll(cssDir, 0755); err != nil {
+		return fmt.Errorf("failed to create internal css directory %s: %w", cssDir, err)
+	}
+
+	// Write bootstrap.min.css
+	bootstrapData, err := fs.ReadFile(bootstrapCSS, "assets/css/bootstrap.min.css")
+	if err != nil {
+		return fmt.Errorf("failed to read embedded bootstrap.min.css: %w", err)
+	}
+	err = os.WriteFile(filepath.Join(cssDir, "bootstrap.min.css"), bootstrapData, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write bootstrap.min.css: %w", err)
+	}
+	fmt.Printf("Created internal: %s\n", filepath.Join(cssDir, "bootstrap.min.css"))
+
+	// Write tiempos.woff2
+	tiemposData, err := fs.ReadFile(tiemposFont, "assets/css/tiempos.woff2")
+	if err != nil {
+		return fmt.Errorf("failed to read embedded tiempos.woff2: %w", err)
+	}
+	err = os.WriteFile(filepath.Join(cssDir, "tiempos.woff2"), tiemposData, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write tiempos.woff2: %w", err)
+	}
+	fmt.Printf("Created internal: %s\n", filepath.Join(cssDir, "tiempos.woff2"))
+
+	return nil
+}
+
 func copyStaticAssets() error {
-	subdirs := []string{"css", "js", "images"}
+	// "css" is removed as it's handled by createInternalCSS
+	subdirs := []string{"js", "images"} 
 	for _, sd := range subdirs {
-		src := filepath.Join("markdown", sd)
+		// Source directly from root, e.g., "js", "images"
+		src := sd 
 		dest := filepath.Join("docs", sd)
 		if err := copyDir(src, dest); err != nil {
 			// skip if doesn't exist

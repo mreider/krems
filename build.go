@@ -18,14 +18,20 @@ func handleBuild() {
 		os.Exit(1)
 	}
 
-	// copy static assets from markdown/(css|js|images) => docs/
+	// Create internal CSS (Bootstrap, fonts) directly into docs/css
+	if err := createInternalCSS("docs"); err != nil {
+		fmt.Printf("Error creating internal CSS: %v\n", err)
+		os.Exit(1)
+	}
+
+	// copy user-provided static assets (js, images) from root => docs/
 	if err := copyStaticAssets(); err != nil {
 		fmt.Printf("Error copying static assets: %v\n", err)
 		os.Exit(1)
 	}
 
 	// parse all .md => PageData
-	pages, err := parseMarkdownFiles("markdown")
+	pages, err := parseMarkdownFiles(".") // Changed "markdown" to "."
 	if err != nil {
 		fmt.Printf("Error parsing markdown: %v\n", err)
 		os.Exit(1)

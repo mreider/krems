@@ -17,7 +17,179 @@
 
 ---
 
-## Installation
+## Simplified Usage with GitHub Actions (Recommended for New Users)
+
+For users who prefer a hands-off approach without needing to install or run `krems` locally, a GitHub Actions workflow can automate the entire process of building and deploying your site.
+
+**How it Works:**
+
+1.  **Create Markdown Files:** You create your `.md` files and any static assets (like images in an `images/` folder, custom JavaScript in `js/`, etc.) directly in the root of your GitHub repository. Core CSS (like Bootstrap) is handled automatically by `krems`. Subfolders for organizing markdown content are also supported (e.g., `my-articles/article1.md`).
+2.  **GitHub Action:** A provided GitHub workflow (see below) will:
+    *   Automatically download the latest `krems` binary.
+    *   If a `config.yaml` is missing, it generates one with default settings:
+        *   Site Name: "My Blog"
+        *   Website URL: Your default GitHub Pages URL (e.g., `https://your-username.github.io/your-repo-name/`)
+        *   Menu: "Home" link, plus links for each top-level folder (e.g., a folder named `my-articles` becomes a "My Articles" menu item).
+    *   Run `krems` to build your site into a temporary `/docs` folder (this folder won't be in your source branch).
+    *   Deploy the contents of this temporary `/docs` folder to a special branch named `gh-pages`.
+    *   If you later update `config.yaml` with a custom domain, the workflow will automatically create the `CNAME` file within the `gh-pages` branch.
+3.  **Local Development & `.gitignore`:**
+    *   Your main branch will only contain your source files (markdown, `config.yaml`, images, etc.). It will *not* contain the generated `/docs` folder.
+    *   It's highly recommended to add `/docs/` to a `.gitignore` file in your project root. This prevents the locally generated build output from being accidentally committed to your source branch. Create a file named `.gitignore` in the root of your repository (if it doesn't exist) and add the following line:
+        ```
+        /docs/
+        ```
+4.  **GitHub Pages Configuration:**
+    *   After the workflow runs for the first time, it will create the `gh-pages` branch.
+    *   Go to your repository's "Settings" tab, then "Pages" in the sidebar.
+    *   Under "Build and deployment", for "Source", select "Deploy from a branch".
+    *   For "Branch", select `gh-pages` and keep the folder as `/ (root)`. Click "Save".
+    *   Your site will then be served from the `gh-pages` branch.
+5.  **Customization:**
+    *   After the first workflow run, `config.yaml` will be in your main repository branch. You can edit it to change the site name, URL, or menu structure. The workflow will respect your changes.
+    *   To use a custom domain, update the `website` URL in `config.yaml` and configure the custom domain in your repository's "Settings" -> "Pages" section. The workflow will handle the `CNAME` file on the `gh-pages` branch.
+
+**Setting up the GitHub Workflow:**
+
+1.  In your GitHub repository (on your main branch, e.g., `main`), create a file named `.github/workflows/deploy-krems-site.yml`.
+2.  Paste the following content into it:
+
+```yaml
+name: Build and Deploy Krems Site
+
+on:
+  push:
+    branches:
+      - main # Or your default branch
+  workflow_dispatch:
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Download latest Krems binary
+        run: |
+          set -e
+          KREMS_ASSET_NAME="krems-linux-amd64"
+          LATEST_KREMS_URL=$(curl -s https://api.github.com/repos/mreider/krems/releases/latest | \
+                             jq -r ".assets[] | select(.name | endswith(\"${KREMS_ASSET_NAME}\")) | .browser_download_url")
+          if [ -z "$LATEST_KREMS_URL" ] || [ "$LATEST_KREMS_URL" == "null" ]; then
+            echo "Error: Could not find ${KREMS_ASSET_NAME} in the latest release of mreider/krems."
+            exit 1
+          fi
+          echo "Downloading Krems from: $LATEST_KREMS_URL"
+          curl -sL -o krems "$LATEST_KREMS_URL"
+          chmod +x ./krems
+          echo "Krems version: $(./krems --version || echo 'version flag not supported')"
+
+      - name: Configure Git User
+        run: |
+          git config user.name "GitHub Action Bot"
+          git config user.email "actions@github.com"
+          
+      - name: Generate config.yaml if it does not exist
+        id: generate_config
+        run: |
+          set -e
+          if [ -f config.yaml ]; then
+            echo "config.yaml found. Skipping generation."
+          else
+            echo "config.yaml not found. Generating initial version..."
+            SITE_NAME="My Blog"
+            REPO_OWNER=$(echo "${{ github.repository }}" | cut -d'/' -f1)
+            REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+            WEBSITE_URL="https://${REPO_OWNER}.github.io/${REPO_NAME}/"
+            echo "name: \"${SITE_NAME}\"" > config.yaml
+            echo "website: \"${WEBSITE_URL}\"" >> config.yaml
+            echo "menu:" >> config.yaml
+            echo "  - name: Home" >> config.yaml
+            echo "    url: /" >> config.yaml
+            find . -maxdepth 1 -mindepth 1 -type d \
+              ! -name ".*" ! -name "docs" ! -name "node_modules" ! -name "vendor" \
+              -print0 | while IFS= read -r -d $'\0' dir; do
+              DIR_NAME=$(basename "$dir")
+              MENU_NAME=$(echo "$DIR_NAME" | sed -e 's/[_-]/ /g' -e 's/\b\(.\)/\u\1/g')
+              echo "  - name: \"${MENU_NAME}\"" >> config.yaml
+              echo "    url: /${DIR_NAME}/" >> config.yaml
+            done
+            echo "Generated config.yaml:"
+            cat config.yaml
+            git add config.yaml
+            if git diff --staged --quiet; then
+              echo "No changes to commit for config.yaml."
+            else
+              git commit -m "feat: Generate initial config.yaml [skip ci]"
+              git push origin HEAD:${{ github.ref_name }}
+            fi
+          fi
+
+      - name: Run Krems to build website
+        run: |
+          set -e
+          ./krems --build # Ensure --build is used if main.go expects a command
+
+      - name: Generate CNAME file for custom domain (if applicable)
+        run: |
+          set -e
+          WEBSITE_LINE=$(grep '^website:' config.yaml || echo "")
+          if [ -z "$WEBSITE_LINE" ]; then echo "Warning: 'website:' not in config.yaml."; exit 0; fi
+          WEBSITE_URL_FROM_CONFIG=$(echo "$WEBSITE_LINE" | sed -n 's/website: "\(.*\)"/\1/p')
+          if [ -z "$WEBSITE_URL_FROM_CONFIG" ]; then WEBSITE_URL_FROM_CONFIG=$(echo "$WEBSITE_LINE" | sed -n "s/website: '\(.*\)'/\1/p"); fi
+          if [ -z "$WEBSITE_URL_FROM_CONFIG" ]; then WEBSITE_URL_FROM_CONFIG=$(echo "$WEBSITE_LINE" | sed -n 's/website: \(.*\)/\1/p'); fi
+          if [ -z "$WEBSITE_URL_FROM_CONFIG" ]; then echo "Warning: Could not parse 'website' URL."; exit 0; fi
+          if [[ "$WEBSITE_URL_FROM_CONFIG" != *"github.io"* ]] && [[ "$WEBSITE_URL_FROM_CONFIG" == "http"* ]]; then
+            CUSTOM_DOMAIN=$(echo "$WEBSITE_URL_FROM_CONFIG" | sed -e 's|^https\?://||' -e 's|/$||' -e 's|/.*$||')
+            if [ -n "$CUSTOM_DOMAIN" ]; then echo "$CUSTOM_DOMAIN" > docs/CNAME; echo "CNAME created: $CUSTOM_DOMAIN"; fi
+          else
+            rm -f docs/CNAME
+          fi
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'Deploy: ${{ github.event.head_commit.message }} [skip ci]'
+          publish_branch: gh-pages # Explicitly deploy to gh-pages branch
+```
+
+With this setup:
+1. Add `/docs/` to your `.gitignore` file.
+2. Configure GitHub Pages to serve from the `gh-pages` branch (from the `/ (root)` of that branch).
+3. Push your markdown changes to your main branch, and your site updates automatically on the `gh-pages` branch!
+
+---
+
+## For Krems Developers/Contributors: Sample Site at Root
+
+Please note that the root of the `krems` repository itself now serves as the source material for the sample website. This sample site is automatically built and deployed (to the `main` branch's `docs/` folder, which is then typically served by GitHub Pages for `mreider.github.io/krems`) by the `.github/workflows/deploy-sample-and-telemetry.yaml` workflow.
+
+-   The `config.yaml` file located at the root of this repository is used for configuring this sample site.
+-   If you run `krems --init` from the root of this repository, it will overwrite the existing `config.yaml` with a default one. This is generally fine if you intend to reset the sample configuration, but be aware of this if you're testing `init`.
+-   The main project `README.md` and other Go project files (`.go`, `go.mod`, etc.) are ignored by `krems` when it builds the sample site from the root.
+
+---
+
+## Manual Installation & Usage (Advanced)
+
+If you prefer to run `krems` locally or need more control:
+
+### Installation
 
 ### Download Prebuilt Binaries
 
@@ -81,14 +253,15 @@ On Windows, you can place `krems.exe` in a directory like `C:\Program Files\Krem
 Krems has three primary commands:
 
 1. **`krems --init`**  
-   Creates a starter directory structure with sample Markdown files, a `config.yaml`, and example images in a folder named `markdown/`. You’ll see a default site (which you can replace). This command embeds Bootstrap files as well, so your site is ready to go.
+   Creates a starter directory structure with sample Markdown files, a `config.yaml`, and example `images/` and `js/` folders (if applicable for samples) directly in your current folder. Core CSS is handled internally by `krems` and is not part of the `init` output structure at the root.
 
 2. **`krems --build`**  
-   Reads the `markdown/` directory and your `config.yaml`, then generates a static site in the `docs/` folder. That includes:  
-   - Converting `.md` to `.html`  
-   - Copying images, JS, and CSS  
+   Reads markdown files and assets (like `images/`, `js/`) from the current directory (and its subdirectories, excluding `docs/`, `.git/`, etc.) and your `config.yaml`, then generates a static site in the `docs/` folder. This includes:
+   - Converting `.md` to `.html`
+   - Automatically generating necessary CSS (like Bootstrap) into `docs/css/`.
+   - Copying assets from `images/` and `js/` (if they exist at the root) into `docs/`.
    - Building an RSS feed
-   - Creating a CNAME file for Github pages
+   - Creating a CNAME file for GitHub Pages (if a custom domain is in `config.yaml`)
    - Generating a `404.html`
    - Creating nice-looking Bootstrap-based pages with a responsive NAV bar
 
@@ -115,7 +288,7 @@ menu:
 
 - **`website.url`**: The base URL for your site (used in RSS feed links).  
 - **`website.name`**: The display name of your site (used in the NAV bar).  
-- **`menu`**: A list of links for your NAV bar. Each link has a `title` (the text that appears) and a `path` (the `.md` file in your `markdown/` folder, e.g. `index.md` or `articles/index.md`).
+- **`menu`**: A list of links for your NAV bar. Each link has a `title` (the text that appears) and a `path` (the `.md` file relative to your project root, e.g. `index.md` or `articles/index.md`).
 
 When you run `--build`, Krems locates each Markdown file referenced in the `menu` and rewrites it to a proper HTML link in the NAV.
 
@@ -123,19 +296,27 @@ When you run `--build`, Krems locates each Markdown file referenced in the `menu
 
 ## Markdown Files & Front Matter
 
-### Directory Structure
+### Directory Structure (Post v0.2.0)
 
-By default, `krems --init` creates:
+`krems` now expects markdown files and asset folders (like `images/`, `css/`, `js/`) to be at the root of your project, not inside a `markdown/` subdirectory.
 
-- `markdown/`  
-  - `index.md`  
-  - `about.md`  
-  - `articles/`  
-    - `index.md`  
-    - `article1.md`  
+A typical structure might look like:
+
+- `index.md` (your homepage)
+- `about.md`
+- `articles/` (a folder for your articles)
+  - `index.md` (optional, could be a list page for articles)
+  - `my-first-article.md`
+  - `another-topic.md`
+- `images/`
+  - `photo.jpg`
+- `js/`
+  - `custom.js` (if you have custom JavaScript)
 - `config.yaml`
 
-You can add more `.md` files anywhere under `markdown/`.  
+Core CSS (Bootstrap) is automatically included by `krems` during the build process; you do not need to create or manage a `css/` folder at the root for these default styles. If you wish to add your *own* custom CSS, you would typically create a `custom.css` file (e.g., in a root `css/` folder you create yourself) and link to it from your HTML templates (an advanced customization).
+
+The `krems --init` command will set up a basic version of this structure, excluding a `css/` folder for core styles as `krems` handles that.
 
 ### Front Matter
 
@@ -164,12 +345,22 @@ image: images/mollusk.png
 
 ## Customizing Your Site
 
-1. **Edit `config.yaml`** – Update your site name, URL, and menu.  
-2. **Edit or create Markdown pages** in `markdown/`. You can add images to `markdown/images/`.  
-3. **Rebuild** with `krems --build`. Check the output in the `docs/` folder.  
-4. **Locally test** with `krems --run`. Visit [http://localhost:8080](http://localhost:8080).  
+1. **Edit `config.yaml`** – Update your site name, URL, and menu.
+2. **Edit or create Markdown pages** in your project root or subfolders (e.g., `articles/`). You can add images to an `images/` folder at the root.
+3. **Rebuild** with `krems --build`. Check the output in the `docs/` folder.
+4. **Locally test** with `krems --run`. Visit [http://localhost:8080](http://localhost:8080).
 
-When you’re satisfied, you can upload the `docs/` directory to GitHub Pages (or any other static hosting) and enjoy your new site.
+When you’re satisfied, you can upload the `docs/` directory to GitHub Pages (or any other static hosting) or rely on the GitHub Action to do it for you.
+
+---
+
+## Breaking Changes (from versions prior to v0.2.0)
+
+-   **Markdown and Asset Location:** `krems` (from v0.2.0 or the version incorporating these simplified workflow changes) no longer looks for content within a `markdown/` subdirectory.
+    *   All your markdown files (`.md`) should be in the root of your project or in subdirectories directly under the root (e.g., `my-articles/article.md`).
+    *   Static assets (like `css/`, `js/`, `images/` folders) should also be at the root level.
+    *   If you run `krems` locally and an old `markdown/` directory is detected, `krems` will display a warning message guiding you to move your content. The build will proceed by looking for content at the root, ignoring the `markdown/` directory.
+-   **`krems --init` Behavior:** The `init` command now creates its sample files and `config.yaml` directly in the current directory, not in a `markdown/` subfolder.
 
 ---
 

@@ -17,13 +17,45 @@ import (
 // parse markdown => PageData
 func parseMarkdownFiles(root string) ([]*PageData, error) {
 	var pages []*PageData
+	ignoredDirs := map[string]bool{
+		"docs":    true,
+		".git":    true,
+		".github": true,
+	}
+	ignoredFiles := map[string]bool{
+		"README.md": true,
+		"readme.md": true,
+		// Potentially add other root files like LICENSE.md if they exist and should be ignored
+	}
+
 	err := filepath.Walk(root, func(p string, info fs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
+
+		// Get relative path to check against ignored files at root
+		relPath, err := filepath.Rel(root, p)
+		if err != nil {
+			// Should not happen if p is under root
+			return err
+		}
+
 		if info.IsDir() {
+			// If the directory is the root itself, continue.
+			// Otherwise, check if it's in the ignore list.
+			if p != root && ignoredDirs[info.Name()] {
+				// fmt.Printf("Ignoring directory: %s\n", p) // Optional: for debugging
+				return filepath.SkipDir
+			}
 			return nil
 		}
+
+		// Ignore specific files at the root level
+		if filepath.Dir(relPath) == "." && ignoredFiles[info.Name()] {
+			// fmt.Printf("Ignoring root file: %s\n", p) // Optional: for debugging
+			return nil
+		}
+
 		if !strings.HasSuffix(strings.ToLower(p), ".md") {
 			return nil
 		}

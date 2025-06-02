@@ -18,15 +18,12 @@ import (
 var initAssets embed.FS
 
 func handleInit() {
-	// Create basic structure
+	// Create basic structure at the root
 	dirs := []string{
-		"markdown",
-		"markdown/universities",
-		"markdown/css",
-		"markdown/js",
-		"markdown/images",
-		"markdown/authors",
-		"markdown/tags",
+		"universities", // For sample university markdown files
+		// "css", // CSS is now handled internally during build
+		"js",           // For sample JS (if any, or for user's custom JS)
+		"images",       // For sample images
 	}
 	for _, d := range dirs {
 		err := os.MkdirAll(d, 0755)
@@ -55,22 +52,25 @@ func handleInit() {
 		var destPath string
 		switch {
 		case strings.HasPrefix(trimmed, "markdown_samples/"):
-			// e.g. "markdown_samples/index.md" => "markdown/index.md"
+			// e.g. "markdown_samples/index.md" => "index.md"
+			// e.g. "markdown_samples/universities/index.md" => "universities/index.md"
 			samplePath := strings.TrimPrefix(trimmed, "markdown_samples/")
-			destPath = filepath.Join("markdown", samplePath)
+			destPath = samplePath // Place directly at root or in specified subfolder
 			if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
 				return err
 			}
-		case strings.HasSuffix(trimmed, ".css"):
-			destPath = filepath.Join("markdown", "css", filepath.Base(trimmed))
-		case strings.HasSuffix(trimmed, ".woff2"):
-			destPath = filepath.Join("markdown", "css", filepath.Base(trimmed))
+		// CSS files from embedded assets are no longer copied to root by init;
+		// they will be written directly to docs/css during build.
+		// case strings.HasSuffix(trimmed, ".css"):
+		// 	destPath = filepath.Join("css", filepath.Base(trimmed))
+		// case strings.HasSuffix(trimmed, ".woff2"):
+		// 	destPath = filepath.Join("css", filepath.Base(trimmed))
 		case strings.HasSuffix(trimmed, ".js"):
-			destPath = filepath.Join("markdown", "js", filepath.Base(trimmed))
+			destPath = filepath.Join("js", filepath.Base(trimmed)) // If sample JS is provided
 		case strings.HasSuffix(trimmed, ".png") || strings.HasSuffix(trimmed, ".ico"):
-			destPath = filepath.Join("markdown", "images", filepath.Base(trimmed))
+			destPath = filepath.Join("images", filepath.Base(trimmed))
 		case strings.HasSuffix(trimmed, "config.yaml"):
-			destPath = "config.yaml"
+			destPath = "config.yaml" // Stays at the root
 		default:
 			// Skip anything else
 			return nil
@@ -104,12 +104,18 @@ authorFilter:
   - Matt
 ---
 `
-	err = os.WriteFile("markdown/index.md", []byte(indexMD), 0644)
+	// Note: The embedded assets might already contain an index.md.
+	// This explicit write will overwrite it if `assets/markdown_samples/index.md` exists.
+	// If the embedded assets are the source of truth for samples, these explicit writes might be redundant
+	// or could be removed if the embedded files are correctly placed by the WalkDir logic.
+	// For now, keeping them to ensure these specific files are created as per original logic, but paths updated.
+
+	err = os.WriteFile("index.md", []byte(indexMD), 0644)
 	if err != nil {
-		fmt.Printf("Error writing markdown/index.md: %v\n", err)
+		fmt.Printf("Error writing index.md: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Created: markdown/index.md")
+	fmt.Println("Created: index.md")
 
 	// Krems city info page
 	kremsCityMD := `---
@@ -122,12 +128,12 @@ tags: ["about"]
 Krems is a beautiful city in Austria known for its rich history, stunning architecture, and vibrant culture.
 Explore its winding streets, local markets, and historical landmarks.
 `
-	err = os.WriteFile("markdown/krems_city_info.md", []byte(kremsCityMD), 0644)
+	err = os.WriteFile("krems_city_info.md", []byte(kremsCityMD), 0644)
 	if err != nil {
-		fmt.Printf("Error writing markdown/krems_city_info.md: %v\n", err)
+		fmt.Printf("Error writing krems_city_info.md: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Created: markdown/krems_city_info.md")
+	fmt.Println("Created: krems_city_info.md")
 
 	// Krems travel info page
 	kremsTravelMD := `---
@@ -140,12 +146,12 @@ tags: ["about"]
 Discover the best travel tips and attractions in Krems.
 From scenic river walks to local culinary delights, plan your perfect visit to this charming Austrian city.
 `
-	err = os.WriteFile("markdown/krems_travel_info.md", []byte(kremsTravelMD), 0644)
+	err = os.WriteFile("krems_travel_info.md", []byte(kremsTravelMD), 0644)
 	if err != nil {
-		fmt.Printf("Error writing markdown/krems_travel_info.md: %v\n", err)
+		fmt.Printf("Error writing krems_travel_info.md: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Created: markdown/krems_travel_info.md")
+	fmt.Println("Created: krems_travel_info.md")
 
 	// Universities subdirectory index page
 	univIndexMD := `---
@@ -157,12 +163,12 @@ authorFilter:
   - Matt
 ---
 `
-	err = os.WriteFile("markdown/universities/index.md", []byte(univIndexMD), 0644)
+	err = os.WriteFile(filepath.Join("universities", "index.md"), []byte(univIndexMD), 0644)
 	if err != nil {
-		fmt.Printf("Error writing markdown/universities/index.md: %v\n", err)
+		fmt.Printf("Error writing universities/index.md: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Created: markdown/universities/index.md")
+	fmt.Println("Created: universities/index.md")
 
 	// University 1 page
 	uni1MD := `---
@@ -174,12 +180,12 @@ tags: ["university"]
 ---
 University for Continuing Education Krems is a leading institution in Krems, offering a diverse range of academic programs and cutting-edge research opportunities.
 `
-	err = os.WriteFile("markdown/universities/uni1.md", []byte(uni1MD), 0644)
+	err = os.WriteFile(filepath.Join("universities", "uni1.md"), []byte(uni1MD), 0644)
 	if err != nil {
-		fmt.Printf("Error writing markdown/universities/uni1.md: %v\n", err)
+		fmt.Printf("Error writing universities/uni1.md: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Created: markdown/universities/uni1.md")
+	fmt.Println("Created: universities/uni1.md")
 
 	// University 2 page
 	uni2MD := `---
@@ -191,33 +197,44 @@ tags: ["university"]
 ---
 IMC Krems University of Applied Sciences is renowned for its innovative teaching methods and vibrant campus life, making it a hub of academic excellence in Krems.
 `
-	err = os.WriteFile("markdown/universities/uni2.md", []byte(uni2MD), 0644)
+	err = os.WriteFile(filepath.Join("universities", "uni2.md"), []byte(uni2MD), 0644)
 	if err != nil {
-		fmt.Printf("Error writing markdown/universities/uni2.md: %v\n", err)
+		fmt.Printf("Error writing universities/uni2.md: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Created: markdown/universities/uni2.md")
+	fmt.Println("Created: universities/uni2.md")
 
 	// Updated config.yaml pointing to the home and universities index pages
+	// This will also be created by the WalkDir if assets/config.yaml exists.
+	// If embedded config is preferred, this explicit write can be removed.
 	configYAML := `# Config for Krems Static Site
 website:
-  url: "http://localhost:8080"
-  name: "Krems Static Site"
+  url: "http://localhost:8080" # Default, user should change this
+  name: "My Krems Site"       # Default, user should change this
 
 menu:
   - title: "Home"
-    path: "index.md"
+    path: "index.md" # Relative to root
   - title: "Universities"
-    path: "universities/index.md"
+    path: "universities/index.md" # Relative to root
+  - title: "City Info"
+    path: "krems_city_info.md"
+  - title: "Travel Info"
+    path: "krems_travel_info.md"
+
 `
+	// This ensures the config.yaml is created/overwritten with these specific menu paths.
+	// If an assets/config.yaml is embedded, it might be copied first by WalkDir, then overwritten here.
 	if err := os.WriteFile("config.yaml", []byte(configYAML), 0644); err != nil {
 		fmt.Printf("Error writing config.yaml: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Println("Created: config.yaml")
-	fmt.Println("\nYour Krems sample site structure has been created!")
+	fmt.Println("Created: config.yaml") // This might print twice if WalkDir also copies it.
+
+	fmt.Println("\nYour Krems sample site structure has been created at the root level!")
 	fmt.Println("Next steps:")
-	fmt.Println("  1) Modify the markdown content in ./markdown")
-	fmt.Println("  2) Edit config.yaml as needed")
-	fmt.Println("  3) Run 'krems --build' to generate your static site!")
+	fmt.Println("  1) Modify the markdown content in the current directory (.) and its subfolders (e.g., ./universities).")
+	fmt.Println("  2) Edit config.yaml as needed (e.g., update website.url, website.name).")
+	fmt.Println("  3) Run 'krems --build' to generate your static site into the 'docs/' folder.")
+	fmt.Println("  4) Run 'krems --run' to preview your site locally at http://localhost:8080.")
 }
