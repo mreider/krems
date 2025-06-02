@@ -177,7 +177,7 @@ With this setup:
 
 ## For Krems Developers/Contributors: Sample Site at Root
 
-Please note that the root of the `krems` repository itself now serves as the source material for the sample website. This sample site is automatically built and deployed (to the `main` branch's `docs/` folder, which is then typically served by GitHub Pages for `mreider.github.io/krems`) by the `.github/workflows/deploy-sample-and-telemetry.yaml` workflow.
+Please note that the root of the `krems` repository itself now serves as the source material for the sample website (e.g., for `https://mreider.github.io/krems/`). This sample site is automatically built and deployed to the `gh-pages` branch by the `.github/workflows/deploy-krems-site.yml` workflow.
 
 -   The `config.yaml` file located at the root of this repository is used for configuring this sample site.
 -   The main project `README.md` and other Go project files (`.go`, `go.mod`, etc.) are ignored by `krems` when it builds the sample site from the root.
@@ -356,7 +356,7 @@ When you’re satisfied, you can upload the `docs/` directory to GitHub Pages (o
     *   All your markdown files (`.md`) should be in the root of your project or in subdirectories directly under the root (e.g., `my-articles/article.md`).
     *   User-provided static assets (like `js/`, `images/` folders) should also be at the root level. Core CSS is handled internally.
     *   If you run `krems` locally and an old `markdown/` directory is detected, `krems` will display a warning message guiding you to move your content. The build will proceed by looking for content at the root, ignoring the `markdown/` directory.
--   **`krems --init` Command Removed:** The `--init` command has been removed. Users should now create their markdown files and optionally a `config.yaml` directly. The GitHub Actions workflow can generate a default `config.yaml` if one is not present.
+-   **`krems --init` Command Removed:** The `--init` command has been removed. Users should now create their markdown files and optionally a `config.yaml` directly. The GitHub Actions workflow (`deploy-krems-site.yml`) can generate a default `config.yaml` if one is not present in a user's repository.
 
 ---
 
