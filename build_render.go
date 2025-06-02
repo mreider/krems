@@ -180,11 +180,41 @@ func create404Page(cache *BuildCache) error {
 		FrontMatter: PageFrontMatter{
 			Title: "404 Not Found",
 		},
-		HTMLContent: template.HTML(`
-<p>Go <a href="/">home</a> to find what you're looking for</p>
-`),
+		// HTMLContent will be set after BasePath logic
 		RelPath:   "404.html",
 		OutputDir: "docs",
+	}
+
+	homePathFor404 := cache.Config.Website.BasePath + "/"
+	if cache.Config.Website.BasePath == "" {
+		// Ensure it's just a single slash if BasePath is empty
+		homePathFor404 = "/"
+	} else if !strings.HasSuffix(cache.Config.Website.BasePath, "/") {
+		// Ensure BasePath (if not empty) ends with a slash for consistency with other links
+		// This might be redundant if BasePath is always stored like "/krems" or ""
+		// but good for safety. However, other links add it: {{BasePath}}/slug/
+		// So, if BasePath is /krems, then /krems/ is correct for home.
+		// If BasePath is "", then / is correct.
+		// The template uses {{.Config.Website.BasePath}}/, so let's match that.
+		// If BasePath is /foo, then /foo/. If BasePath is "", then /.
+		// This is already handled by `href="{{.Config.Website.BasePath}}/"` in the main template.
+		// So, for consistency:
+		// homePathFor404 = cache.Config.Website.BasePath 
+		// if homePathFor404 != "" && !strings.HasSuffix(homePathFor404, "/") {
+		// 	homePathFor404 += "/"
+		// } else if homePathFor404 == "" {
+		//  homePathFor404 = "/"
+		// }
+		// This logic is simpler:
+		// if BasePath is "/foo", then "/foo/"
+		// if BasePath is "", then "/"
+	}
+	// The navbar brand link uses {{.Config.Website.BasePath}}/, so let's be consistent.
+	// If BasePath is "/foo", this becomes "/foo/"
+	// If BasePath is "", this becomes "/"
+	pseudo.HTMLContent = template.HTML(fmt.Sprintf(`
+<p>Go <a href="%s/">home</a> to find what you're looking for</p>
+`, cache.Config.Website.BasePath))
 	}
 
 	var menuItems []string

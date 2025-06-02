@@ -17,22 +17,22 @@ const htmlTemplate = `<!DOCTYPE html>
     <meta name="description" content="{{.Page.FrontMatter.Description}}">
     <meta name="viewport" content="width:device-width, initial-scale=1.0">
     {{if .Page.FrontMatter.Image}}
-    <meta property="og:image" content="{{.Config.Website.URL}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
+    <meta property="og:image" content="{{.Config.Website.URL}}{{.Config.Website.BasePath}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="{{.Config.Website.URL}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
+    <meta name="twitter:image" content="{{.Config.Website.URL}}{{.Config.Website.BasePath}}/{{.Page.FrontMatter.Image | trimPrefixSlash}}" />
     {{end}}
     <meta property="og:site_name" content="{{.Config.Website.Name}}">
-    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="{{.Config.Website.BasePath}}/images/favicon.ico" type="image/x-icon">
 
-    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{.Config.Website.BasePath}}/css/bootstrap.min.css">
     <style>
         /* Load custom font */
         @font-face {
             font-family: 'Tiempos';
-            src: url('/css/tiempos.woff2') format('woff2');
+            src: url('{{.Config.Website.BasePath}}/css/tiempos.woff2') format('woff2');
             font-weight: normal;
             font-style: normal;
         }
@@ -150,14 +150,14 @@ const htmlTemplate = `<!DOCTYPE html>
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 {{range $i, $label := .MenuItems}}
                 <li class="nav-item">
-                    <a class="nav-link" href="{{index $.MenuTargets $i}}">{{$label}}</a>
+                    <a class="nav-link" href="{{$.Config.Website.BasePath}}{{index $.MenuTargets $i}}">{{$label}}</a>
                 </li>
                 {{end}}
             </ul>
         </div>
 
         <!-- Website Title on the Right -->
-        <a class="navbar-brand" href="/">
+        <a class="navbar-brand" href="{{.Config.Website.BasePath}}/">
             {{.Config.Website.Name}}
         </a>
     </div>
@@ -167,7 +167,7 @@ const htmlTemplate = `<!DOCTYPE html>
 <div class="container-lg mt-5 mb-5">
     {{if .Page.FrontMatter.Image}}
     {{ $cleanImg := .Page.FrontMatter.Image | trimPrefixSlash }}
-    <img src="/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
+    <img src="{{$.Config.Website.BasePath}}/{{$cleanImg}}" style="max-width:400px;width:100%;height:auto;" class="img-fluid mb-3 rounded" alt="featured image">
     {{end}}
 
 	{{if (ne .Page.FrontMatter.Title "")}}
@@ -246,39 +246,45 @@ const htmlTemplate = `<!DOCTYPE html>
     </footer>
 </div>
 
-<script src="/js/bootstrap.js"></script>
+<script src="{{.Config.Website.BasePath}}/js/bootstrap.js"></script>
 </body>
 </html>
 `
 
 // authorLink generates a link to the author's page
 func authorLink(author string) template.HTML {
-	if author == "" {
+	if author == "" || globalBuildCache == nil || globalBuildCache.Config == nil {
 		return ""
 	}
 	authorSlug := slug.Make(author)
-	return template.HTML(fmt.Sprintf(` by <a href="/authors/%s/">%s</a>`, authorSlug, author))
+	basePath := globalBuildCache.Config.Website.BasePath
+	// Ensure no double slashes if basePath is empty, but always a leading slash if basePath is not empty.
+	// And ensure a trailing slash for the directory.
+	return template.HTML(fmt.Sprintf(` by <a href="%s/authors/%s/">%s</a>`, basePath, authorSlug, author))
 }
 
 // tagsLine generates a list of tags with links to tag pages
 func tagsLine(tags []string) template.HTML {
-	if len(tags) == 0 {
+	if len(tags) == 0 || globalBuildCache == nil || globalBuildCache.Config == nil {
 		return ""
 	}
+	basePath := globalBuildCache.Config.Website.BasePath
 	var tagLinks []string
 	for _, tag := range tags {
 		tagSlug := slug.Make(tag)
-		tagLinks = append(tagLinks, fmt.Sprintf(`<a href="/tags/%s/"><span class="badge bg-secondary">%s</span></a>`, tagSlug, tag))
+		tagLinks = append(tagLinks, fmt.Sprintf(`<a href="%s/tags/%s/"><span class="badge bg-secondary">%s</span></a>`, basePath, tagSlug, tag))
 	}
 	return template.HTML(strings.Join(tagLinks, " "))
 }
 
 // authorLine generates the author line with a link to the author's page
 func authorLine(author string) template.HTML {
-	if author == "" {
+	if author == "" || globalBuildCache == nil || globalBuildCache.Config == nil {
 		return ""
 	}
-	return template.HTML(fmt.Sprintf(`by <a href="/authors/%s/">%s</a>`, slug.Make(author), author))
+	basePath := globalBuildCache.Config.Website.BasePath
+	authorSlug := slug.Make(author)
+	return template.HTML(fmt.Sprintf(`by <a href="%s/authors/%s/">%s</a>`, basePath, authorSlug, author))
 }
 
 // dateDisplay formats the date in a nice format (Jan 1, 2025)

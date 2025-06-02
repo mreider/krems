@@ -1,6 +1,7 @@
 website:
   url: "https://mreider.github.io/krems"
   name: "Krems Example Site"
+  basePath: "/krems"
 
 menu:
   - title: "Home"

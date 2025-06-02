@@ -15,8 +15,9 @@ type QuackerConfig struct {
 
 type Config struct {
 	Website struct {
-		URL  string `yaml:"url"`
-		Name string `yaml:"name"`
+		URL      string `yaml:"url"`
+		Name     string `yaml:"name"`
+		BasePath string `yaml:"basePath,omitempty"` // Added BasePath
 	} `yaml:"website"`
 	Menu []struct {
 		Title string `yaml:"title"`

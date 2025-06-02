@@ -164,7 +164,25 @@ func fixLinksAndImages(cache *BuildCache, page *PageData) []byte {
 							for _, other := range cache.Pages {
 									if other.RelPath == linkCandidate {
 											outDir := FindPageByRelPath(cache, other.RelPath)
-											return []byte(fmt.Sprintf("[%s](/%s/)", linkText, outDir))
+											// Prepend BasePath, ensuring no double slashes if BasePath is "/" or empty
+											// and outDir starts with "/"
+											// A common pattern: ensure BasePath is "" or "/path" (no trailing slash)
+											// and outDir is "slug" (no leading slash for joining)
+											// For now, assume outDir is like "slug" and BasePath is "/base" or ""
+											// So, basePath + "/" + outDir, but handle empty basePath and ensure one slash.
+											// Let's assume cache.Config.Website.BasePath is available.
+											// And outDir is like "actual-slug" (no leading/trailing slashes from FindPageByRelPath)
+											// Then link should be {{basePath}}/{{outDir}}/
+											// The current Fprintf gives /slug/, so we need to adjust.
+											// Let's assume FindPageByRelPath returns "slug" (no slashes)
+											// and BasePath is "/base" or ""
+
+											// The existing fmt.Sprintf gives "/%s/", so outDir is just the slug.
+											// We want {{BasePath}}/{{slug}}/
+											// If BasePath is "/bp", result is "/bp/slug/"
+											// If BasePath is "", result is "/slug/"
+											// This seems correct.
+											return []byte(fmt.Sprintf("[%s](%s/%s/)", linkText, cache.Config.Website.BasePath, outDir))
 									}
 							}
 					}
