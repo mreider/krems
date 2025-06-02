@@ -100,6 +100,10 @@ func renderHTMLPage(cache *BuildCache, page *PageData) error {
 	if err != nil {
 		return err
 	}
+
+	// Debug: Print BasePath to confirm it's loaded
+	fmt.Printf("DEBUG: BasePath in renderHTMLPage for page %s: [%s]\n", page.RelPath, cache.Config.Website.BasePath)
+
 	if err := tmpl.Execute(f, data); err != nil {
 		return err
 	}
