@@ -2,23 +2,21 @@
 
 ## 1. What is Krems?
 
-Krems is a straightforward static site generator designed for creating clean, fast markdown-based blogs and websites.
-- **Simple by Design**: Focus on your content; Krems handles the rest.
-- **Markdown-Powered**: Write your posts and pages in familiar Markdown.
-- **Fixed Styling**: Comes with a clean, responsive design (Bootstrap CSS) included, so you don't have to worry about CSS.
-- **All-Inclusive**: Generates HTML, navigation, RSS feeds, and handles assets.
-- **Obsidian Friendly**: An Obsidian plugin is coming soon.
+Krems is a straightforward static site generator for markdown-based blogs.
+
+- **Simple by Design**: Doesn't do a lot. But still does ok
+- **Markdown-Powered**: No HTML needed
+- **Fixed Styling**: Hope you're ok with a simmple responsive Bootstrap. If not - too bad?
+- **Obsidian Friendly**: Works in the world's most awesome notes app
 
 ## 2. How It Works: Get Started with the Example Site
 
-The easiest way to understand Krems is to explore the example site.
-
-1.  **Clone the Example Site:**
+A.  **Clone the Example Site:**
     ```bash
     git clone https://github.com/mreider/krems-example.git
     cd krems-example
     ```
-2.  **Explore the Structure:**
+B.  **Explore the Structure:**
     Look at the `config.yaml` file, the markdown files (`.md`), and how content is organized. This will give you a feel for how Krems projects are structured.
 
 ## 3. Build It Locally
@@ -26,29 +24,19 @@ The easiest way to understand Krems is to explore the example site.
 To build the site from the markdown files into static HTML:
 
   ```bash
-  krems --build
-  ```
-
-This command will generate the website into a `docs/` folder.
-
-## 4. Run It Locally
-
-To preview your site locally after building it:
-
-  ```bash
   krems --run
   ```
 
-This will start a local web server, typically at `http://localhost:8080`. The `krems --run` command automatically rebuilds the site using settings suitable for local development (like `devPath: "/"` in your `config.yaml`).
+This command will generate and run your blog from the `tmp/` folder.
 
-## 5. Deploy Your Own Site with GitHub Pages
+## 4. Deploy Your Own Site with GitHub Pages
 
 You can easily host your Krems site for free using GitHub Pages. The `krems-example` repository includes a GitHub Actions workflow that automates building and deploying your site.
 
-1.  **Create Your Repository on GitHub:**
+A.  **Create Your Repository on GitHub:**
     Go to GitHub and create a new, empty repository (e.g., `yourusername/my-new-blog`).
 
-2.  **Clone the Example and Set Your Remote:**
+B.  **Clone the Example and Set Your Remote:**
     ```bash
     # Clone the example site into a temporary directory
     git clone https://github.com/mreider/krems-example.git my-blog-temp
@@ -95,4 +83,4 @@ After setting up your repository, you'll need to customize the configuration:
     *   First, configure your custom domain in your repository's "Settings" > "Pages" section on GitHub.
     *   Then, simply set the `website.url` in your `config.yaml` to your full custom domain URL (e.g., `https://www.myawesomeblog.com`). Krems will automatically generate the necessary `CNAME` file during the build process.
 
-That's it! You now have a simple, markdown-powered blog or website running with Krems.
+That's it!
