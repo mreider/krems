@@ -34,3 +34,6 @@ krems
 # config.yaml
 
 .DS_Store
+
+# Temporary directory used by krems --run (if created within the project)
+/tmp/

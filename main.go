@@ -33,10 +33,12 @@ func main() {
 	// case "--init": // Removed --init functionality
 	//	handleInit()
 	case "--build":
-		handleBuild(true) // Build with dev settings (e.g., devPath if available)
+		// For a standalone build, output to "docs" directory.
+		// true for isDevMode to use devPath from config if available.
+		handleBuild(true, "docs")
 	case "--run":
-		handleBuild(true) // Build with dev settings (e.g., devPath if available)
-		handleRun()       // Then serve
+		// handleRun now calls handleBuild internally with a temporary directory.
+		handleRun()
 	case "--version":
 		// Ideally, this version string is injected at build time.
 		// For now, we'll use a placeholder.

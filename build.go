@@ -8,9 +8,10 @@ import (
 
 // handleBuild => krems --build
 // isDevMode indicates if the build is for local development (krems --run)
-func handleBuild(isDevMode bool) {
-	// remove docs/ if exists
-	_ = os.RemoveAll("docs")
+// outputDir specifies where to build the site.
+func handleBuild(isDevMode bool, outputDir string) {
+	// remove outputDir if exists
+	_ = os.RemoveAll(outputDir)
 
 	// read config.yaml
 	cfg, err := readConfig("config.yaml")
@@ -27,27 +28,27 @@ func handleBuild(isDevMode bool) {
 	// If not in dev mode, or DevPath is not set, cfg.Website.BasePath remains as read from config.yaml
 	// or its default if not specified.
 
-	// Create internal CSS (Bootstrap, fonts) directly into docs/css
-	if err := createInternalCSS("docs"); err != nil {
+	// Create internal CSS (Bootstrap, fonts) directly into outputDir/css
+	if err := createInternalCSS(outputDir); err != nil { // MODIFIED
 		fmt.Printf("Error creating internal CSS: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Create internal JS (Bootstrap) directly into docs/js
-	if err := createInternalJS("docs"); err != nil {
+	// Create internal JS (Bootstrap) directly into outputDir/js
+	if err := createInternalJS(outputDir); err != nil { // MODIFIED
 		fmt.Printf("Error creating internal JS: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Create internal favicon directly into docs/images
-	if err := createInternalFavicon("docs"); err != nil {
+	// Create internal favicon directly into outputDir/images
+	if err := createInternalFavicon(outputDir); err != nil { // MODIFIED
 		fmt.Printf("Error creating internal favicon: %v\n", err)
 		os.Exit(1)
 	}
 
-	// copy user-provided static assets (js, images) from root => docs/
+	// copy user-provided static assets (js, images) from root => outputDir/
 	// This will overwrite embedded files if user provides their own versions.
-	if err := copyStaticAssets(); err != nil {
+	if err := copyStaticAssets(outputDir); err != nil { // MODIFIED (assuming copyStaticAssets will take outputDir)
 		fmt.Printf("Error copying static assets: %v\n", err)
 		os.Exit(1)
 	}
@@ -67,25 +68,25 @@ func handleBuild(isDevMode bool) {
 	assignGlobalCache(cache)
 
 	// process pages => rewrite links => HTML => final
-	if err := processPages(cache); err != nil {
+	if err := processPages(cache, outputDir); err != nil { // MODIFIED (assuming processPages will take outputDir)
 		fmt.Printf("Error processing pages: %v\n", err)
 		os.Exit(1)
 	}
 
 	// Generate author and tag list pages
-	if err := generateAuthorPages(cache); err != nil {
+	if err := generateAuthorPages(cache, outputDir); err != nil { // MODIFIED (assuming generateAuthorPages will take outputDir)
 		fmt.Printf("Error generating author pages: %v\n", err)
 		os.Exit(1)
 	}
 
-	if err := generateTagPages(cache); err != nil {
+	if err := generateTagPages(cache, outputDir); err != nil { // MODIFIED (assuming generateTagPages will take outputDir)
 		fmt.Printf("Error generating tag pages: %v\n", err)
 		os.Exit(1)
 	}
 
 	domain := extractDomain(cache.Config.Website.URL)
 	if domain != "" {
-		cnameFile := filepath.Join("docs", "CNAME")
+		cnameFile := filepath.Join(outputDir, "CNAME") // MODIFIED
 		err := os.WriteFile(cnameFile, []byte(domain+"\n"), 0644)
 		if err != nil {
 			fmt.Printf("Error creating CNAME file: %v\n", err)
@@ -96,16 +97,16 @@ func handleBuild(isDevMode bool) {
 	}
 
 	// generate rss.xml
-	if err := generateRSS(cache); err != nil {
+	if err := generateRSS(cache, outputDir); err != nil { // MODIFIED (assuming generateRSS will take outputDir)
 		fmt.Printf("Error generating RSS: %v\n", err)
 		os.Exit(1)
 	}
 
 	// create 404.html
-	if err := create404Page(cache); err != nil {
+	if err := create404Page(cache, outputDir); err != nil { // MODIFIED (assuming create404Page will take outputDir)
 		fmt.Printf("Error creating 404.html: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Println("Build complete! The 'docs/' directory is ready.")
+	fmt.Printf("Build complete! The '%s' directory is ready.\n", outputDir) // MODIFIED
 }

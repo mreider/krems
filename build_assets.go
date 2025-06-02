@@ -90,13 +90,13 @@ func createInternalFavicon(outputBaseDir string) error {
 	return nil
 }
 
-func copyStaticAssets() error {
+func copyStaticAssets(outputDir string) error { // MODIFIED: Added outputDir parameter
 	// "css" is removed as it's handled by createInternalCSS
-	subdirs := []string{"js", "images"} 
+	subdirs := []string{"js", "images"}
 	for _, sd := range subdirs {
 		// Source directly from root, e.g., "js", "images"
-		src := sd 
-		dest := filepath.Join("docs", sd)
+		src := sd
+		dest := filepath.Join(outputDir, sd) // MODIFIED: Used outputDir
 		if err := copyDir(src, dest); err != nil {
 			// skip if doesn't exist
 			var fsErr *fs.PathError

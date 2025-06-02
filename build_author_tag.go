@@ -10,7 +10,7 @@ import (
 )
 
 // generateAuthorPages generates list pages for each author
-func generateAuthorPages(cache *BuildCache) error {
+func generateAuthorPages(cache *BuildCache, outputDirRoot string) error { // MODIFIED: Added outputDirRoot
 	authors := make(map[string]bool)
 	for _, p := range cache.Pages {
 		if p.FrontMatter.Author != "" {
@@ -19,7 +19,7 @@ func generateAuthorPages(cache *BuildCache) error {
 	}
 
 	for author := range authors {
-		if err := generateAuthorPage(cache, author); err != nil {
+		if err := generateAuthorPage(cache, author, outputDirRoot); err != nil { // MODIFIED: Passed outputDirRoot
 			return err
 		}
 	}
@@ -27,7 +27,7 @@ func generateAuthorPages(cache *BuildCache) error {
 }
 
 // generateTagPages generates list pages for each tag
-func generateTagPages(cache *BuildCache) error {
+func generateTagPages(cache *BuildCache, outputDirRoot string) error { // MODIFIED: Added outputDirRoot
 	tags := make(map[string]bool)
 	for _, p := range cache.Pages {
 		for _, tag := range p.FrontMatter.Tags {
@@ -36,7 +36,7 @@ func generateTagPages(cache *BuildCache) error {
 	}
 
 	for tag := range tags {
-		if err := generateTagPage(cache, tag); err != nil {
+		if err := generateTagPage(cache, tag, outputDirRoot); err != nil { // MODIFIED: Passed outputDirRoot
 			return err
 		}
 	}
@@ -44,9 +44,9 @@ func generateTagPages(cache *BuildCache) error {
 }
 
 // generateAuthorPage generates a list page for a specific author
-func generateAuthorPage(cache *BuildCache, author string) error {
+func generateAuthorPage(cache *BuildCache, author string, outputDirRoot string) error { // MODIFIED: Added outputDirRoot
 	authorSlug := slug.Make(author)
-	dir := filepath.Join("docs", "authors", authorSlug)
+	dir := filepath.Join(outputDirRoot, "authors", authorSlug) // MODIFIED: Used outputDirRoot
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func generateAuthorPage(cache *BuildCache, author string) error {
 	}
 
 	tmpl := template.New("author")
-	tmpl = initTemplateFuncs(tmpl)
+	tmpl = initTemplateFuncs(tmpl, outputDirRoot) // MODIFIED: Passed outputDirRoot as siteBuildRoot
 	tmpl, err = tmpl.Parse(htmlTemplate)
 	if err != nil {
 		return err
@@ -117,9 +117,9 @@ func generateAuthorPage(cache *BuildCache, author string) error {
 }
 
 // generateTagPage generates a list page for a specific tag
-func generateTagPage(cache *BuildCache, tag string) error {
+func generateTagPage(cache *BuildCache, tag string, outputDirRoot string) error { // MODIFIED: Added outputDirRoot
 	tagSlug := slug.Make(tag)
-	dir := filepath.Join("docs", "tags", tagSlug)
+	dir := filepath.Join(outputDirRoot, "tags", tagSlug) // MODIFIED: Used outputDirRoot
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func generateTagPage(cache *BuildCache, tag string) error {
 	data.MenuTargets = menuTargets
 
 	tmpl := template.New("tag")
-	tmpl = initTemplateFuncs(tmpl)
+	tmpl = initTemplateFuncs(tmpl, outputDirRoot) // MODIFIED: Passed outputDirRoot as siteBuildRoot
 	tmpl, err = tmpl.Parse(htmlTemplate)
 	if err != nil {
 		return err

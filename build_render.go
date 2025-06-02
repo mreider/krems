@@ -15,7 +15,7 @@ import (
 	"github.com/gosimple/slug"
 )
 
-func processPages(cache *BuildCache) error {
+func processPages(cache *BuildCache, outputDirRoot string) error { // MODIFIED: Added outputDirRoot
 	for _, p := range cache.Pages {
 		base := filepath.Base(p.RelPath)
 		if base == "index.md" {
@@ -29,13 +29,13 @@ func processPages(cache *BuildCache) error {
 		}
 
 		if p.IsIndex {
-			p.OutputDir = filepath.Join("docs", dir)
+			p.OutputDir = filepath.Join(outputDirRoot, dir) // MODIFIED: Used outputDirRoot
 		} else {
 			slugTitle := slug.Make(p.FrontMatter.Title)
 			if slugTitle == "" {
 				slugTitle = strings.TrimSuffix(base, ".md")
 			}
-			p.OutputDir = filepath.Join("docs", dir, slugTitle)
+			p.OutputDir = filepath.Join(outputDirRoot, dir, slugTitle) // MODIFIED: Used outputDirRoot
 		}
 	}
 
@@ -48,14 +48,16 @@ func processPages(cache *BuildCache) error {
 		htmlBytes := markdown.ToHTML(p.MarkdownContent, mdParser, nil)
 		p.HTMLContent = template.HTML(htmlBytes)
 
-		if err := renderHTMLPage(cache, p); err != nil {
+		// MODIFIED: Pass outputDirRoot (as siteBuildRoot) to renderHTMLPage
+		if err := renderHTMLPage(cache, p, outputDirRoot); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func renderHTMLPage(cache *BuildCache, page *PageData) error {
+// MODIFIED: Added siteBuildRoot parameter
+func renderHTMLPage(cache *BuildCache, page *PageData, siteBuildRoot string) error {
 	if err := os.MkdirAll(page.OutputDir, 0755); err != nil {
 		return err
 	}
@@ -95,7 +97,8 @@ func renderHTMLPage(cache *BuildCache, page *PageData) error {
 	}
 
 	tmpl := template.New("page")
-	tmpl = initTemplateFuncs(tmpl)
+	// MODIFIED: Pass siteBuildRoot to initTemplateFuncs
+	tmpl = initTemplateFuncs(tmpl, siteBuildRoot)
 	tmpl, err = tmpl.Parse(htmlTemplate)
 	if err != nil {
 		return err
@@ -112,8 +115,8 @@ func renderHTMLPage(cache *BuildCache, page *PageData) error {
 	return nil
 }
 
-// generate RSS => docs/rss.xml
-func generateRSS(cache *BuildCache) error {
+// generate RSS => outputDirRoot/rss.xml
+func generateRSS(cache *BuildCache, outputDirRoot string) error { // MODIFIED: Added outputDirRoot
 	var dated []*PageData
 	for _, p := range cache.Pages {
 		if !p.FrontMatter.ParsedDate.IsZero() {
@@ -130,8 +133,18 @@ func generateRSS(cache *BuildCache) error {
 		title := escapeForXML(p.FrontMatter.Title)
 		desc := escapeForXML(p.FrontMatter.Description)
 
-		out := strings.TrimPrefix(p.OutputDir, "docs/")
-		link := strings.TrimSuffix(cache.Config.Website.URL, "/") + "/" + out + "/"
+		// p.OutputDir is now like /tmp/krems-run-XYZ/actual/path
+		// We need to make it relative to outputDirRoot for the URL
+		relOut, err := filepath.Rel(outputDirRoot, p.OutputDir)
+		if err != nil {
+			// This should not happen if p.OutputDir is correctly prefixed
+			return fmt.Errorf("could not make path %s relative to %s: %w", p.OutputDir, outputDirRoot, err)
+		}
+		link := strings.TrimSuffix(cache.Config.Website.URL, "/") + "/" + filepath.ToSlash(relOut) + "/"
+		if p.IsIndex && relOut == "." { // Handle root index.md case
+			link = strings.TrimSuffix(cache.Config.Website.URL, "/") + "/"
+		}
+
 
 		var enclosure string
 		if p.FrontMatter.Image != "" {
@@ -164,17 +177,18 @@ func generateRSS(cache *BuildCache) error {
 		escapeForXML(cache.Config.Website.Name),
 		strings.Join(items, "\n"))
 
-	if err := os.WriteFile(filepath.Join("docs", "rss.xml"), []byte(rss), 0644); err != nil {
+	rssPath := filepath.Join(outputDirRoot, "rss.xml") // MODIFIED: Used outputDirRoot
+	if err := os.WriteFile(rssPath, []byte(rss), 0644); err != nil {
 		return err
 	}
-	fmt.Println("Generated: docs/rss.xml")
+	fmt.Printf("Generated: %s\n", rssPath) // MODIFIED
 	return nil
 }
 
-// create 404.html => docs/404.html
-func create404Page(cache *BuildCache) error {
-	_ = os.MkdirAll("docs", 0755)
-	f, err := os.Create(filepath.Join("docs", "404.html"))
+// create 404.html => outputDirRoot/404.html
+func create404Page(cache *BuildCache, outputDirRoot string) error { // MODIFIED: Added outputDirRoot
+	_ = os.MkdirAll(outputDirRoot, 0755) // MODIFIED: Used outputDirRoot
+	f, err := os.Create(filepath.Join(outputDirRoot, "404.html")) // MODIFIED: Used outputDirRoot
 	if err != nil {
 		return err
 	}
@@ -185,8 +199,8 @@ func create404Page(cache *BuildCache) error {
 			Title: "404 Not Found",
 		},
 		// HTMLContent will be set after BasePath logic
-		RelPath:   "404.html",
-		OutputDir: "docs",
+		RelPath:   "404.html", // This is fine, it's a pseudo path
+		OutputDir: outputDirRoot, // MODIFIED: Used outputDirRoot
 	}
 
 	var homeLinkFor404Page string
@@ -238,7 +252,7 @@ func create404Page(cache *BuildCache) error {
 		return err
 	}
 
-	fmt.Println("Generated: docs/404.html")
+	fmt.Printf("Generated: %s\n", filepath.Join(outputDirRoot, "404.html")) // MODIFIED
 	return nil
 }
 
@@ -273,14 +287,15 @@ func escapeForXML(s string) string {
 }
 
 // template funcs
-func initTemplateFuncs(t *template.Template) *template.Template {
-	return t.Funcs(template.FuncMap{
-		"trimPrefixSlash":      trimPrefixSlash,
-		"relativeToRoot":       relativeToRoot,
-		"imagePath":            imagePath,
-		"listPagesInDirectory": listPagesInDirectory,
-		"authorLink":           authorLink,
-		"tagsLine":             tagsLine,
+// MODIFIED: initTemplateFuncs already changed to accept siteBuildRoot in the previous step. This is just for context.
+// func initTemplateFuncs(t *template.Template, siteBuildRoot string) *template.Template {
+// 	return t.Funcs(template.FuncMap{
+// 		"trimPrefixSlash":      trimPrefixSlash,
+// 		"relativeToRoot":       func(pageOutputDir string) string { return relativeToRoot(pageOutputDir, siteBuildRoot) },
+// 		"imagePath":            func(pageOutputDir, img string) string { return imagePath(pageOutputDir, siteBuildRoot, img) },
+// 		"listPagesInDirectory": listPagesInDirectory, // This might also need siteBuildRoot if it constructs paths
+// 		"authorLink":           authorLink,
+// 		"tagsLine":             tagsLine,
 		"authorLine":           authorLine,
 		"dateDisplay":          dateDisplay,
 		"sitePath":             sitePath, // Added sitePath
@@ -291,15 +306,95 @@ func trimPrefixSlash(s string) string {
 	return strings.TrimPrefix(s, "/")
 }
 
-func relativeToRoot(outputDir string) string {
-	rel, _ := filepath.Rel(outputDir, "docs")
-	if rel == "." {
+func relativeToRoot(pageOutputDir, siteBuildRoot string) string { // MODIFIED: Added siteBuildRoot
+	// Ensure siteBuildRoot is absolute or resolvable correctly with pageOutputDir
+	// For simplicity, assume both are absolute or consistently relative for Rel to work.
+	// If pageOutputDir is /tmp/build/foo and siteBuildRoot is /tmp/build, rel should be ".."
+	// If pageOutputDir is /tmp/build/foo/bar and siteBuildRoot is /tmp/build, rel should be "../.."
+
+	// If pageOutputDir is identical to siteBuildRoot (e.g. for index.html at root)
+	if filepath.Clean(pageOutputDir) == filepath.Clean(siteBuildRoot) {
 		return "."
+	}
+
+	rel, err := filepath.Rel(pageOutputDir, siteBuildRoot)
+	if err != nil {
+		// Fallback or error handling if paths are not relatable (e.g. different drives on Windows)
+		// For now, let's assume they are relatable.
+		// This might happen if pageOutputDir is not a subpath of siteBuildRoot, which would be an error.
+		// Or if siteBuildRoot is not "above" or at the same level as pageOutputDir.
+		// Let's print an error and return a sensible default or panic.
+		fmt.Fprintf(os.Stderr, "Error calculating relative path from %s to %s: %v\n", pageOutputDir, siteBuildRoot, err)
+		return "." // Fallback, might lead to broken links
+	}
+
+	// filepath.Rel might return something like `../..`
+	// This should be correct for constructing paths from the page's location back to the root.
+	if rel == "." { // This case might be covered by the Clean check above, but good to have.
+		return "." // Already at the root or same level
 	}
 	return filepath.ToSlash(rel)
 }
 
-func imagePath(outputDir, img string) string {
-	root := relativeToRoot(outputDir)
-	return filepath.ToSlash(filepath.Join(root, img))
+// imagePath calculates the path to an image relative to the current page's output directory.
+// pageOutputDir is the directory where the current HTML page is being written (e.g., /tmp/build/posts/my-post).
+// siteBuildRoot is the root of the build output (e.g., /tmp/build).
+// img is the path to the image relative to the siteBuildRoot (e.g., images/my-image.png or /images/my-image.png).
+func imagePath(pageOutputDir, siteBuildRoot, img string) string {
+	// img can be /images/foo.png or images/foo.png. We want it relative to siteBuildRoot.
+	imgRelToSiteRoot := strings.TrimPrefix(img, "/")
+
+	// Path of the image file on the filesystem
+	absImgPath := filepath.Join(siteBuildRoot, imgRelToSiteRoot)
+
+	// Path from the current page's directory to the image file
+	relPathToImg, err := filepath.Rel(pageOutputDir, absImgPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error calculating relative image path from %s to %s: %v\n", pageOutputDir, absImgPath, err)
+		return img // Fallback
+	}
+	return filepath.ToSlash(relPathToImg)
 }
+
+// sitePath needs to be aware of the siteBuildRoot to correctly use relativeToRoot
+// and also the actual page's output directory.
+// The current global cache `globalCache` has `Config.Website.BasePath`.
+// The `page` object has `OutputDir`.
+// We need to pass `siteBuildRoot` to the template functions.
+
+// Modified initTemplateFuncs to pass siteBuildRoot
+func initTemplateFuncs(t *template.Template, siteBuildRoot string) *template.Template {
+	return t.Funcs(template.FuncMap{
+		"trimPrefixSlash":      trimPrefixSlash,
+		"relativeToRoot":       func(pageOutputDir string) string { return relativeToRoot(pageOutputDir, siteBuildRoot) },
+		"imagePath":            func(pageOutputDir, img string) string { return imagePath(pageOutputDir, siteBuildRoot, img) },
+		"listPagesInDirectory": listPagesInDirectory, // This might also need siteBuildRoot if it constructs paths
+		"authorLink":           authorLink,
+		"tagsLine":             tagsLine,
+		"authorLine":           authorLine,
+		"dateDisplay":          dateDisplay,
+		"sitePath":             func(p string) string { return sitePath(globalCache.Config.Website.BasePath, p) }, // sitePath itself seems okay if BasePath is correct
+	})
+}
+
+// renderHTMLPage needs to pass siteBuildRoot to initTemplateFuncs
+// The siteBuildRoot is the `page.OutputDir`'s root part, which is `outputDirRoot` from `processPages`.
+// However, renderHTMLPage is called for each page, and `page.OutputDir` is specific.
+// The `siteBuildRoot` is the one passed to `handleBuild`.
+// So, `renderHTMLPage` needs `siteBuildRoot` as a parameter.
+// And `processPages` needs to pass it to `renderHTMLPage`.
+
+// Let's adjust renderHTMLPage signature and call
+// renderHTMLPage(cache *BuildCache, page *PageData, siteBuildRoot string)
+
+// In processPages:
+// if err := renderHTMLPage(cache, p, outputDirRoot); err != nil { return err }
+
+// Then in renderHTMLPage:
+// tmpl = initTemplateFuncs(tmpl, siteBuildRoot)
+// This seems more robust.
+
+// The definition of sitePath is not in this file, I'll assume it's in htmlTemplate.go or similar
+// and correctly uses BasePath. The main concern is that BasePath itself is set correctly
+// (which handleBuild does: `if isDevMode && cfg.Website.DevPath != "" { cfg.Website.BasePath = cfg.Website.DevPath }`)
+// and that relative paths generated by `imagePath` etc. work from the served location.

@@ -5,23 +5,55 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 )
 
-// handleRun starts a local HTTP server on port 8080
-// that serves files from ./docs/ (the output of krems --build).
+// handleRun builds the site into a temporary directory,
+// starts a local HTTP server to serve it, and cleans up the directory on exit.
 func handleRun() {
+	// Create a temporary directory for the build output
+	tempDir, err := os.MkdirTemp("", "krems-run-")
+	if err != nil {
+		log.Fatalf("Failed to create temporary directory: %v", err)
+	}
+	fmt.Printf("Using temporary directory for build: %s\n", tempDir)
+
+	// Defer cleanup of the temporary directory
+	// Also set up a signal handler for Ctrl+C
+	cleanup := func() {
+		fmt.Printf("\nCleaning up temporary directory: %s\n", tempDir)
+		if err := os.RemoveAll(tempDir); err != nil {
+			log.Printf("Warning: Failed to remove temporary directory %s: %v", tempDir, err)
+		}
+	}
+	defer cleanup()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		cleanup()
+		os.Exit(0)
+	}()
+
+	// Build the site into the temporary directory
+	// Assuming handleBuild will be modified to accept an output directory
+	// and a flag indicating it's for 'run' mode (which might affect base paths etc.)
+	fmt.Println("Building site for local preview...")
+	handleBuild(true, tempDir) // true for isDevMode, tempDir for output
+	fmt.Println("Build complete.")
+
 	port := "8080"
-	// Wrap Go's FileServer with our custom handler
-	// so we can log requests and serve a custom 404 page.
-	fs := http.FileServer(http.Dir("docs"))
+	fs := http.FileServer(http.Dir(tempDir))
 
 	http.Handle("/", &loggingFileHandler{
-		root:    "docs",
+		root:    tempDir,
 		handler: fs,
 	})
 
-	fmt.Printf("Serving 'docs/' on http://localhost:%s ...\n", port)
+	fmt.Printf("Serving '%s' on http://localhost:%s ... (Press Ctrl+C to stop)\n", tempDir, port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
