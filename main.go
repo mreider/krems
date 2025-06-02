@@ -34,8 +34,8 @@ func main() {
 	//	handleInit()
 	case "--build":
 		// For a standalone build, output to "docs" directory.
-		// true for isDevMode to use devPath from config if available.
-		handleBuild(true, "docs")
+		// false for isDevMode to ensure BasePath from config is used for production builds.
+		handleBuild(false, "docs")
 	case "--run":
 		// handleRun now calls handleBuild internally with a temporary directory.
 		handleRun()

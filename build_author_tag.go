@@ -103,7 +103,7 @@ func generateAuthorPage(cache *BuildCache, author string, outputDirRoot string) 
 	}
 
 	tmpl := template.New("author")
-	tmpl = initTemplateFuncs(tmpl, outputDirRoot) // MODIFIED: Passed outputDirRoot as siteBuildRoot
+	tmpl = initTemplateFuncs(tmpl, cache, outputDirRoot) // MODIFIED: Passed cache and outputDirRoot as siteBuildRoot
 	tmpl, err = tmpl.Parse(htmlTemplate)
 	if err != nil {
 		return err
@@ -179,7 +179,7 @@ func generateTagPage(cache *BuildCache, tag string, outputDirRoot string) error 
 	data.MenuTargets = menuTargets
 
 	tmpl := template.New("tag")
-	tmpl = initTemplateFuncs(tmpl, outputDirRoot) // MODIFIED: Passed outputDirRoot as siteBuildRoot
+	tmpl = initTemplateFuncs(tmpl, cache, outputDirRoot) // MODIFIED: Passed cache and outputDirRoot as siteBuildRoot
 	tmpl, err = tmpl.Parse(htmlTemplate)
 	if err != nil {
 		return err

@@ -98,7 +98,7 @@ func renderHTMLPage(cache *BuildCache, page *PageData, siteBuildRoot string) err
 
 	tmpl := template.New("page")
 	// MODIFIED: Pass siteBuildRoot to initTemplateFuncs
-	tmpl = initTemplateFuncs(tmpl, siteBuildRoot)
+	tmpl = initTemplateFuncs(tmpl, cache, siteBuildRoot)
 	tmpl, err = tmpl.Parse(htmlTemplate)
 	if err != nil {
 		return err
@@ -243,7 +243,7 @@ func create404Page(cache *BuildCache, outputDirRoot string) error { // MODIFIED:
 	}
 
 	tmpl := template.New("404")
-	tmpl = initTemplateFuncs(tmpl)
+	tmpl = initTemplateFuncs(tmpl, cache, outputDirRoot)
 	tmpl, err = tmpl.Parse(htmlTemplate)
 	if err != nil {
 		return err
@@ -284,22 +284,6 @@ func escapeForXML(s string) string {
 		`'`, "&apos;",
 	)
 	return r.Replace(s)
-}
-
-// template funcs
-// MODIFIED: initTemplateFuncs already changed to accept siteBuildRoot in the previous step. This is just for context.
-// func initTemplateFuncs(t *template.Template, siteBuildRoot string) *template.Template {
-// 	return t.Funcs(template.FuncMap{
-// 		"trimPrefixSlash":      trimPrefixSlash,
-// 		"relativeToRoot":       func(pageOutputDir string) string { return relativeToRoot(pageOutputDir, siteBuildRoot) },
-// 		"imagePath":            func(pageOutputDir, img string) string { return imagePath(pageOutputDir, siteBuildRoot, img) },
-// 		"listPagesInDirectory": listPagesInDirectory, // This might also need siteBuildRoot if it constructs paths
-// 		"authorLink":           authorLink,
-// 		"tagsLine":             tagsLine,
-		"authorLine":           authorLine,
-		"dateDisplay":          dateDisplay,
-		"sitePath":             sitePath, // Added sitePath
-	})
 }
 
 func trimPrefixSlash(s string) string {
@@ -362,8 +346,8 @@ func imagePath(pageOutputDir, siteBuildRoot, img string) string {
 // The `page` object has `OutputDir`.
 // We need to pass `siteBuildRoot` to the template functions.
 
-// Modified initTemplateFuncs to pass siteBuildRoot
-func initTemplateFuncs(t *template.Template, siteBuildRoot string) *template.Template {
+// Modified initTemplateFuncs to pass siteBuildRoot and cache
+func initTemplateFuncs(t *template.Template, cache *BuildCache, siteBuildRoot string) *template.Template {
 	return t.Funcs(template.FuncMap{
 		"trimPrefixSlash":      trimPrefixSlash,
 		"relativeToRoot":       func(pageOutputDir string) string { return relativeToRoot(pageOutputDir, siteBuildRoot) },
@@ -373,7 +357,7 @@ func initTemplateFuncs(t *template.Template, siteBuildRoot string) *template.Tem
 		"tagsLine":             tagsLine,
 		"authorLine":           authorLine,
 		"dateDisplay":          dateDisplay,
-		"sitePath":             func(p string) string { return sitePath(globalCache.Config.Website.BasePath, p) }, // sitePath itself seems okay if BasePath is correct
+		"sitePath":             func(p string) string { return sitePath(filepath.ToSlash(filepath.Join(cache.Config.Website.BasePath, p))) },
 	})
 }
 
