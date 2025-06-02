@@ -33,9 +33,10 @@ func main() {
 	// case "--init": // Removed --init functionality
 	//	handleInit()
 	case "--build":
-		handleBuild()
+		handleBuild(false) // Standard build
 	case "--run":
-		handleRun()
+		handleBuild(true) // Build with dev settings (e.g., devPath)
+		handleRun()       // Then serve
 	case "--version":
 		// Ideally, this version string is injected at build time.
 		// For now, we'll use a placeholder.

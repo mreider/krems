@@ -7,7 +7,8 @@ import (
 )
 
 // handleBuild => krems --build
-func handleBuild() {
+// isDevMode indicates if the build is for local development (krems --run)
+func handleBuild(isDevMode bool) {
 	// remove docs/ if exists
 	_ = os.RemoveAll("docs")
 
@@ -17,6 +18,14 @@ func handleBuild() {
 		fmt.Printf("Error reading config.yaml: %v\n", err)
 		os.Exit(1)
 	}
+
+	// Determine the effective base path
+	// If isDevMode is true and DevPath is set, use DevPath. Otherwise, use BasePath.
+	if isDevMode && cfg.Website.DevPath != "" {
+		cfg.Website.BasePath = cfg.Website.DevPath
+	}
+	// If not in dev mode, or DevPath is not set, cfg.Website.BasePath remains as read from config.yaml
+	// or its default if not specified.
 
 	// Create internal CSS (Bootstrap, fonts) directly into docs/css
 	if err := createInternalCSS("docs"); err != nil {

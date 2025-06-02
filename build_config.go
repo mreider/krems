@@ -18,6 +18,7 @@ type Config struct {
 		URL      string `yaml:"url"`
 		Name     string `yaml:"name"`
 		BasePath string `yaml:"basePath,omitempty"` // Added BasePath
+		DevPath  string `yaml:"devPath,omitempty"`
 	} `yaml:"website"`
 	Menu []struct {
 		Title string `yaml:"title"`
