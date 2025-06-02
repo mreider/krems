@@ -11,20 +11,26 @@ import (
 	"fmt"   // Added fmt here
 )
 
-//go:embed assets/css/bootstrap.min.css
-var bootstrapCSS embed.FS
+// Embed assets from a flat assets/ directory
+//go:embed assets/bootstrap.min.css
+var embeddedBootstrapCSS embed.FS
 
-//go:embed assets/css/tiempos.woff2
-var tiemposFont embed.FS
+//go:embed assets/tiempos.woff2
+var embeddedTiemposFont embed.FS
+
+//go:embed assets/bootstrap.js
+var embeddedBootstrapJS embed.FS
+
+//go:embed assets/favicon.ico
+var embeddedFaviconICO embed.FS
 
 func createInternalCSS(outputBaseDir string) error {
 	cssDir := filepath.Join(outputBaseDir, "css")
 	if err := os.MkdirAll(cssDir, 0755); err != nil {
-		return fmt.Errorf("failed to create internal css directory %s: %w", cssDir, err)
+		return fmt.Errorf("failed to create output css directory %s: %w", cssDir, err)
 	}
 
-	// Write bootstrap.min.css
-	bootstrapData, err := fs.ReadFile(bootstrapCSS, "assets/css/bootstrap.min.css")
+	bootstrapData, err := fs.ReadFile(embeddedBootstrapCSS, "assets/bootstrap.min.css")
 	if err != nil {
 		return fmt.Errorf("failed to read embedded bootstrap.min.css: %w", err)
 	}
@@ -34,8 +40,7 @@ func createInternalCSS(outputBaseDir string) error {
 	}
 	fmt.Printf("Created internal: %s\n", filepath.Join(cssDir, "bootstrap.min.css"))
 
-	// Write tiempos.woff2
-	tiemposData, err := fs.ReadFile(tiemposFont, "assets/css/tiempos.woff2")
+	tiemposData, err := fs.ReadFile(embeddedTiemposFont, "assets/tiempos.woff2")
 	if err != nil {
 		return fmt.Errorf("failed to read embedded tiempos.woff2: %w", err)
 	}
@@ -44,7 +49,44 @@ func createInternalCSS(outputBaseDir string) error {
 		return fmt.Errorf("failed to write tiempos.woff2: %w", err)
 	}
 	fmt.Printf("Created internal: %s\n", filepath.Join(cssDir, "tiempos.woff2"))
+	return nil
+}
 
+func createInternalJS(outputBaseDir string) error {
+	jsDir := filepath.Join(outputBaseDir, "js")
+	if err := os.MkdirAll(jsDir, 0755); err != nil {
+		return fmt.Errorf("failed to create output js directory %s: %w", jsDir, err)
+	}
+
+	jsData, err := fs.ReadFile(embeddedBootstrapJS, "assets/bootstrap.js")
+	if err != nil {
+		return fmt.Errorf("failed to read embedded bootstrap.js: %w", err)
+	}
+	err = os.WriteFile(filepath.Join(jsDir, "bootstrap.js"), jsData, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write bootstrap.js: %w", err)
+	}
+	fmt.Printf("Created internal: %s\n", filepath.Join(jsDir, "bootstrap.js"))
+	return nil
+}
+
+func createInternalFavicon(outputBaseDir string) error {
+	// Favicon goes into outputBaseDir/images/favicon.ico, but is sourced from assets/favicon.ico
+	// The HTML template links to {{sitePath "/images/favicon.ico"}}
+	imagesDir := filepath.Join(outputBaseDir, "images")
+	if err := os.MkdirAll(imagesDir, 0755); err != nil {
+		return fmt.Errorf("failed to create output images directory %s: %w", imagesDir, err)
+	}
+
+	faviconData, err := fs.ReadFile(embeddedFaviconICO, "assets/favicon.ico")
+	if err != nil {
+		return fmt.Errorf("failed to read embedded favicon.ico: %w", err)
+	}
+	err = os.WriteFile(filepath.Join(imagesDir, "favicon.ico"), faviconData, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write favicon.ico: %w", err)
+	}
+	fmt.Printf("Created internal: %s\n", filepath.Join(imagesDir, "favicon.ico"))
 	return nil
 }
 

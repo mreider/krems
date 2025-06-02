@@ -24,7 +24,20 @@ func handleBuild() {
 		os.Exit(1)
 	}
 
+	// Create internal JS (Bootstrap) directly into docs/js
+	if err := createInternalJS("docs"); err != nil {
+		fmt.Printf("Error creating internal JS: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Create internal favicon directly into docs/images
+	if err := createInternalFavicon("docs"); err != nil {
+		fmt.Printf("Error creating internal favicon: %v\n", err)
+		os.Exit(1)
+	}
+
 	// copy user-provided static assets (js, images) from root => docs/
+	// This will overwrite embedded files if user provides their own versions.
 	if err := copyStaticAssets(); err != nil {
 		fmt.Printf("Error copying static assets: %v\n", err)
 		os.Exit(1)
