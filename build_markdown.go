@@ -18,7 +18,7 @@ import (
 func parseMarkdownFiles(root string) ([]*PageData, error) {
 	var pages []*PageData
 	ignoredDirs := map[string]bool{
-		"docs":    true,
+		"tmp":     true, // Changed from "docs" to "tmp"
 		".git":    true,
 		".github": true,
 	}

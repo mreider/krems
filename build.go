@@ -62,8 +62,9 @@ func handleBuild(isDevMode bool, outputDir string) {
 
 	// create BuildCache
 	cache := &BuildCache{
-		Pages:  pages,
-		Config: cfg,
+		Pages:                 pages,
+		Config:                cfg,
+		CurrentBuildOutputDir: outputDir, // Set the current build output directory
 	}
 	assignGlobalCache(cache)
 

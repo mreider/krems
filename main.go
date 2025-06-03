@@ -33,9 +33,9 @@ func main() {
 	// case "--init": // Removed --init functionality
 	//	handleInit()
 	case "--build":
-		// For a standalone build, output to "docs" directory.
+		// For a standalone build, output to "tmp" directory.
 		// false for isDevMode to ensure BasePath from config is used for production builds.
-		handleBuild(false, "docs")
+		handleBuild(false, "tmp")
 	case "--run":
 		// handleRun now calls handleBuild internally with a temporary directory.
 		handleRun()

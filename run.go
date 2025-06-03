@@ -64,7 +64,7 @@ func handleRun() {
 //
 // It also logs each request with the final HTTP status code.
 type loggingFileHandler struct {
-	root    string // "docs"
+	root    string // temporary build directory
 	handler http.Handler
 }
 
