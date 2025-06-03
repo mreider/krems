@@ -10,22 +10,29 @@ import (
 	"syscall"
 )
 
-// handleRun builds the site into a temporary directory,
+// handleRun builds the site into the ./.tmp directory,
 // starts a local HTTP server to serve it, and cleans up the directory on exit.
-func handleRun() {
-	// Create a temporary directory for the build output
-	tempDir, err := os.MkdirTemp("", "krems-run-")
-	if err != nil {
-		log.Fatalf("Failed to create temporary directory: %v", err)
+func handleRun(port string) { // Accept port as a parameter
+	// Use the constant outputDirName = ".tmp"
+	// This directory is relative to where krems is run (project root)
+	
+	// Ensure the output directory exists, remove if it does to start fresh for run
+	// For 'run', we always want a fresh build in .tmp
+	if err := os.RemoveAll(outputDirName); err != nil {
+		log.Printf("Warning: Failed to remove existing %s directory: %v", outputDirName, err)
+		// Continue, as handleBuild will also try to remove it.
 	}
-	fmt.Printf("Using temporary directory for build: %s\n", tempDir)
+	if err := os.MkdirAll(outputDirName, 0755); err != nil {
+		log.Fatalf("Failed to create %s directory: %v", outputDirName, err)
+	}
+	fmt.Printf("Using output directory for build: %s\n", outputDirName)
 
-	// Defer cleanup of the temporary directory
+	// Defer cleanup of the .tmp directory
 	// Also set up a signal handler for Ctrl+C
 	cleanup := func() {
-		fmt.Printf("\nCleaning up temporary directory: %s\n", tempDir)
-		if err := os.RemoveAll(tempDir); err != nil {
-			log.Printf("Warning: Failed to remove temporary directory %s: %v", tempDir, err)
+		fmt.Printf("\nCleaning up output directory: %s\n", outputDirName)
+		if err := os.RemoveAll(outputDirName); err != nil {
+			log.Printf("Warning: Failed to remove output directory %s: %v", outputDirName, err)
 		}
 	}
 	defer cleanup()
@@ -34,26 +41,23 @@ func handleRun() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		cleanup()
+		cleanup() // Ensure cleanup happens before exit
 		os.Exit(0)
 	}()
 
-	// Build the site into the temporary directory
-	// Assuming handleBuild will be modified to accept an output directory
-	// and a flag indicating it's for 'run' mode (which might affect base paths etc.)
 	fmt.Println("Building site for local preview...")
-	handleBuild(true, tempDir) // true for isDevMode, tempDir for output
+	handleBuild(true, outputDirName) // true for isDevMode, outputDirName for output
 	fmt.Println("Build complete.")
 
-	port := "8080"
-	fs := http.FileServer(http.Dir(tempDir))
+	// Use the port parameter
+	fs := http.FileServer(http.Dir(outputDirName))
 
 	http.Handle("/", &loggingFileHandler{
-		root:    tempDir,
+		root:    outputDirName, // Use the .tmp directory
 		handler: fs,
 	})
 
-	fmt.Printf("Serving '%s' on http://localhost:%s ... (Press Ctrl+C to stop)\n", tempDir, port)
+	fmt.Printf("Serving '%s' on http://localhost:%s ... (Press Ctrl+C to stop)\n", outputDirName, port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
@@ -64,7 +68,7 @@ func handleRun() {
 //
 // It also logs each request with the final HTTP status code.
 type loggingFileHandler struct {
-	root    string // temporary build directory
+	root    string // e.g. ".tmp"
 	handler http.Handler
 }
 
@@ -74,31 +78,23 @@ func (l *loggingFileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fullPath := filepath.Join(l.root, r.URL.Path)
 	info, err := os.Stat(fullPath)
 	if err != nil {
-		// File does not exist => 404
 		l.notFound(lrw, r)
 		return
 	}
 
 	if info.IsDir() {
-		// Check if there's an index.html in that directory
 		indexPath := filepath.Join(fullPath, "index.html")
 		fi, err2 := os.Stat(indexPath)
 		if err2 != nil || fi.IsDir() {
-			// No index.html => 404
 			l.notFound(lrw, r)
 			return
 		}
-		// Otherwise, let FileServer serve the directory (which includes index.html).
 	}
 
-	// If it's a file, or a directory with index.html => pass to FileServer
 	l.handler.ServeHTTP(lrw, r)
 	log.Printf("%s %s -> %d\n", r.Method, r.URL.Path, lrw.statusCode)
 }
 
-// notFound is a helper that writes a 404 status and attempts
-// to serve docs/404.html if present. If not present,
-// it serves a minimal fallback HTML.
 func (l *loggingFileHandler) notFound(lrw *loggingResponseWriter, r *http.Request) {
 	lrw.WriteHeader(http.StatusNotFound)
 
@@ -108,12 +104,9 @@ func (l *loggingFileHandler) notFound(lrw *loggingResponseWriter, r *http.Reques
 	} else {
 		fmt.Fprintln(lrw, "<html><body><h1>404 Not Found</h1></body></html>")
 	}
-
 	log.Printf("%s %s -> %d\n", r.Method, r.URL.Path, http.StatusNotFound)
 }
 
-// loggingResponseWriter records the final status code written,
-// so we can log it after FileServer (or our custom logic) finishes.
 type loggingResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
