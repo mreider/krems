@@ -91,15 +91,39 @@ func generateAuthorPage(cache *BuildCache, author string, outputDirRoot string) 
 	}
 
 	data := struct {
-		Config      *Config
-		Page        *PageData
-		MenuItems   []string
-		MenuTargets []string
+		Config              *Config
+		Page                *PageData
+		MenuItems           []string
+		MenuTargets         []string
+		AlternativeCSSFiles []string
+		AlternativeJSFiles  []string
 	}{
 		Config:      cache.Config,
 		Page:        pseudo,
 		MenuItems:   menuItems,
 		MenuTargets: menuTargets,
+	}
+
+	if cache.Config.Website.AlternativeCSSDir != "" {
+		files, err := os.ReadDir(cache.Config.Website.AlternativeCSSDir)
+		if err == nil {
+			for _, file := range files {
+				if !file.IsDir() && filepath.Ext(file.Name()) == ".css" {
+					data.AlternativeCSSFiles = append(data.AlternativeCSSFiles, "/css/"+file.Name())
+				}
+			}
+		}
+	}
+
+	if cache.Config.Website.AlternativeJSDir != "" {
+		files, err := os.ReadDir(cache.Config.Website.AlternativeJSDir)
+		if err == nil {
+			for _, file := range files {
+				if !file.IsDir() && filepath.Ext(file.Name()) == ".js" {
+					data.AlternativeJSFiles = append(data.AlternativeJSFiles, "/js/"+file.Name())
+				}
+			}
+		}
 	}
 
 	tmpl := template.New("author")
@@ -148,15 +172,39 @@ func generateTagPage(cache *BuildCache, tag string, outputDirRoot string) error 
 	cache.Pages = append(cache.Pages, pseudo)
 
 	data := struct {
-		Config      *Config
-		Page        *PageData
-		MenuItems   []string
-		MenuTargets []string
+		Config              *Config
+		Page                *PageData
+		MenuItems           []string
+		MenuTargets         []string
+		AlternativeCSSFiles []string
+		AlternativeJSFiles  []string
 	}{
 		Config:      cache.Config,
 		Page:        pseudo,
-		MenuItems:   []string{},
-		MenuTargets: []string{},
+		MenuItems:   []string{}, // Will be populated below
+		MenuTargets: []string{}, // Will be populated below
+	}
+
+	if cache.Config.Website.AlternativeCSSDir != "" {
+		files, err := os.ReadDir(cache.Config.Website.AlternativeCSSDir)
+		if err == nil {
+			for _, file := range files {
+				if !file.IsDir() && filepath.Ext(file.Name()) == ".css" {
+					data.AlternativeCSSFiles = append(data.AlternativeCSSFiles, "/css/"+file.Name())
+				}
+			}
+		}
+	}
+
+	if cache.Config.Website.AlternativeJSDir != "" {
+		files, err := os.ReadDir(cache.Config.Website.AlternativeJSDir)
+		if err == nil {
+			for _, file := range files {
+				if !file.IsDir() && filepath.Ext(file.Name()) == ".js" {
+					data.AlternativeJSFiles = append(data.AlternativeJSFiles, "/js/"+file.Name())
+				}
+			}
+		}
 	}
 
 	var menuItems []string
