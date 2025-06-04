@@ -1,86 +1,142 @@
-# Krems: Simple Static Sites for Markdown Blogs
+# Krems
 
-## 1. What is Krems?
+Krems lets you publish Markdown websites to Github pages.
 
-Krems is a straightforward static site generator for markdown-based blogs.
+[☕️ Buy me a coffee ☕️](https://coff.ee/mreider)
 
-- **Simple by Design**: Doesn't do a lot. But still does ok
-- **Markdown-Powered**: No HTML needed
-- **Fixed Styling**: Hope you're ok with a simmple responsive Bootstrap. If not - too bad?
-- **Obsidian Friendly**: Works in the world's most awesome notes app
+## Getting started
 
-## 2. How It Works: Get Started with the Example Site
+1. Fork the [example site](https://github.com/mreider/krems-example/)
+2. Enable the workflow
+3. Turn on Github Pages in the repository
+    - Push from the gh-pages branch
+    - Use the /(root) folder
+4. View your repository's actions
+    - An action should be running
+    - When it's done your website will be ready
 
-A.  **Clone the Example Site:**
-    ```bash
-    git clone https://github.com/mreider/krems-example.git
-    cd krems-example
-    ```
-B.  **Explore the Structure:**
-    Look at the `config.yaml` file, the markdown files (`.md`), and how content is organized. This will give you a feel for how Krems projects are structured.
+You can view your website in a browser.
 
-## 3. Build It Locally
+For example:
 
-To build the site from the markdown files into static HTML:
+https://your-gh-user.github.io/krems-example/
 
-  ```bash
-  krems --run
-  ```
+Note: The config.yaml file contains my example URL, so links will redirect to that URL instead of yours. To fix this, edit your local config.yaml file and redeploy.
 
-This command will generate and run your blog from the `tmp/` folder.
+## Learn from the example and build your own site
 
-## 4. Deploy Your Own Site with GitHub Pages
+The example site shows all of the functionality of Krems. The stylesheet is fixed and generic for everyone. All Krems sites look the same. If you want to improve it, open a pull request and I can update it.
 
-You can easily host your Krems site for free using GitHub Pages. The `krems-example` repository includes a GitHub Actions workflow that automates building and deploying your site.
+## Images
 
-A.  **Create Your Repository on GitHub:**
-    Go to GitHub and create a new, empty repository (e.g., `yourusername/my-new-blog`).
+You must store your images in an /images folder and reference them using normal markdown. You can have subfolders of images to keep them organized.
 
-B.  **Clone the Example and Set Your Remote:**
-    ```bash
-    # Clone the example site into a temporary directory
-    git clone https://github.com/mreider/krems-example.git my-blog-temp
-    cd my-blog-temp
+## Page Types
 
-    # Change the remote URL to point to *your* new GitHub repository
-    git remote set-url origin https://github.com/yourusername/my-new-blog.git # Replace with your repo URL
+There are two page types.
 
-    # Push the example site's code to your new repository
-    # (Use 'main' or your repository's default branch name)
-    git push -u origin main
-    ```
+## List pages
 
-3.  **GitHub Actions Workflow:**
-    The `krems-example` site includes a GitHub Actions workflow file (in `.github/workflows/`). When you push code to your repository's main branch, this workflow will:
-    *   Automatically build your Krems site.
-    *   Deploy the contents to a special `gh-pages` branch in your repository.
+- show links to other pages
+- only show pages that have dates
+- (usually) have no markdown content
+- (usually) show a list of pages in a single directory
+- (usually) exist as index.md in a directory
+- have the following front matter:
 
-4.  **Configure GitHub Pages:**
-    *   In your GitHub repository, go to "Settings" > "Pages".
-    *   Under "Build and deployment", for "Source", select "Deploy from a branch".
-    *   For "Branch", choose `gh-pages` and ensure the folder is set to `/ (root)`. Click "Save".
-    *   Your site will typically be available at `https://yourusername.github.io/my-new-blog/`.
+```
+---
+title: "Krems Home Page"
+type: list
+created: 2025-06-04T09:24
+updated: 2025-06-04T09:39
+---
+```
 
-## 6. Configure Your Site
+## List page filters
 
-After setting up your repository, you'll need to customize the configuration:
+List page filters expand the functionality of a list page
 
-1.  **Edit `config.yaml`:**
-    Open the `config.yaml` file in your repository.
-    *   **`website.url`**: Change this to your site's URL.
-        *   For a GitHub Pages site like `https://yourusername.github.io/my-new-blog/`, set it to this URL.
-        *   If using a custom domain (e.g., `https://www.myawesomeblog.com`), set it to your custom domain.
-    *   **`website.name`**: Set your desired site name (appears in the navigation bar).
-    *   **`website.basePath`**: This is important for links to work correctly.
-        *   If your site is at `https://yourusername.github.io/my-new-blog/`, set `basePath: "/my-new-blog/"`.
-        *   If your repository is named `yourusername.github.io` and you want the site at `https://yourusername.github.io/`, set `basePath: "/"`
-        *   If using a custom domain pointing to the root, set `basePath: "/"`
-    *   **`website.devPath`**: For local development with `krems --run` or `krems --build` (locally), you'll typically want `devPath: "/"`. This is usually pre-configured in the example.
-    *   Update the `menu` section to reflect your site's structure.
+- shows all pages in all subdirectories with:
+    - specific tags (or...)
+    - specific authors
+- have the following front matter:
 
-2.  **Custom Domain (CNAME):**
-    If you want to use a custom domain (e.g., `www.myawesomeblog.com`):
-    *   First, configure your custom domain in your repository's "Settings" > "Pages" section on GitHub.
-    *   Then, simply set the `website.url` in your `config.yaml` to your full custom domain URL (e.g., `https://www.myawesomeblog.com`). Krems will automatically generate the necessary `CNAME` file during the build process.
 
-That's it!
+```
+---
+title: Krems Home Page
+type: list
+tagFilter:
+  - about
+authorFilter:
+  - Matt
+---
+```
+
+## Default pages
+
+- have Markdown content
+- include an (optional) image
+    - is converted to an Open Graph image
+    - displayed as a preview images when someone shares the page URL
+- have the following frontmatter:
+
+```
+---
+title: "Krems City Info"
+date: "2024-11-26"
+image: "/images/krems1.png"
+author: "Matt"
+tags: ["about"]
+---
+```
+
+## About config.yaml
+
+- required at root directory
+- must have `basePath` if home page is in a subdirectory
+- must have `devPath` to run locally without subdirectory
+- follows example below:
+
+```
+website:
+  url: "https://mreider.github.io/krems-example"
+  name: "Krems Example Site"
+  basePath: "/krems-example"
+  devPath: "/"
+
+menu:
+  - title: "Home"
+    path: "index.md"
+  - title: "Universities"
+    path: "universities/index.md"
+```
+
+
+## Running Krems locally
+
+1. Download the [latest binary](https://github.com/mreider/krems/releases) and put it in your path
+2. Create a Krems site or clone the [example](https://github.com/mreider/krems-example)
+3. Run and browse the site:
+    - `krems --run`
+    - runs at localhost:8080 (--port to override)
+4. this creates a .tmp directory with HTML
+5. clean the .tmp directory using:
+    - `krems --clean`
+6. to build the site without running:
+    - `krems --build`
+
+## About the Github Action
+
+The [example](https://github.com/mreider/krems-example) has a Workflow that uses the [Krems Github Action](https://github.com/mreider/krems-deploy-action).
+
+- Generates the site on push
+- Commits the website to gh-pages branch using the /(root) directory
+- Creates a CNAME file if the config.yaml has a custom domain
+
+## Questions / feedback
+
+- [about Krems static site generation](https://github.com/mreider/krems/issues)
+- [about the Krems Obsidian plugin](https://github.com/mreider/krems-obsidian-plugin/issues)
+- [about the Krems Github Action](https://github.com/mreider/krems-deploy-action/issues)
