@@ -1,0 +1,97 @@
+/* Load custom font */
+        @font-face {
+            font-family: 'Tiempos';
+            src: url('{{sitePath "/css/tiempos.woff2"}}') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        /* Apply the custom font globally */
+        :root {
+            --bs-body-font-family: 'Tiempos', serif;
+        }
+
+        /* Remove all background colors */
+        body, nav {
+            background-color: white !important;
+        }
+
+        /* Adjust font sizes subtly */
+        body {
+            font-size: 1.1rem;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+        }
+
+        /* Navbar adjustments */
+        .navbar-brand {
+            font-weight: bold;
+        }
+
+        /* Ensure the navbar is aligned with content */
+        .navbar-nav {
+            width: auto;
+        }
+
+        .navbar {
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        /* Align navbar with content using the same container width */
+        .navbar .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 15px; /* Adds a bit of padding to prevent edge hugging */
+        }
+
+        /* Fix mobile menu layout to display vertically when collapsed */
+        @media (max-width: 991.98px) {
+            .navbar-collapse .navbar-nav {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                margin-left: 0 !important;
+            }
+            
+            .navbar-collapse .navbar-nav .nav-item {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+            
+            .navbar-collapse .nav-link {
+                padding: 8px 0;
+            }
+        }
+
+        /* Desktop menu layout */
+        @media (min-width: 992px) {
+            .navbar .navbar-nav {
+                flex-direction: row;
+                align-items: center;
+            }
+            
+            .navbar-collapse .navbar-nav {
+                margin-left: 10px;
+            }
+            
+            .navbar .navbar-nav .nav-item {
+                margin-right: 15px;
+            }
+        }
+
+        /* Fix for bullets in content area, ensure they are inside */
+        ul {
+            padding-left: 20px; /* Indentation for the bullets */
+            margin-left: 0; /* Remove any negative margin */
+        }
+
+        /* Fix the left align of content and navbar */
+        .container-lg {
+            max-width: 960px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 15px;
+            padding-right: 15px;
+        }

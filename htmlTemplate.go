@@ -27,112 +27,14 @@ const htmlTemplate = `<!DOCTYPE html>
     <meta property="og:site_name" content="{{.Config.Website.Name}}">
     <link rel="icon" href="{{sitePath "/images/favicon.ico"}}" type="image/x-icon">
 
+    {{if .AlternativeCSSFiles}}
+        {{range .AlternativeCSSFiles}}
+    <link rel="stylesheet" href="{{sitePath .}}">
+        {{end}}
+    {{else}}
     <link rel="stylesheet" href="{{sitePath "/css/bootstrap.min.css"}}">
-    <style>
-        /* Load custom font */
-        @font-face {
-            font-family: 'Tiempos';
-            src: url('{{sitePath "/css/tiempos.woff2"}}') format('woff2');
-            font-weight: normal;
-            font-style: normal;
-        }
-
-        /* Apply the custom font globally */
-        :root {
-            --bs-body-font-family: 'Tiempos', serif;
-        }
-
-        /* Remove all background colors */
-        body, nav {
-            background-color: white !important;
-        }
-
-        /* Adjust font sizes subtly */
-        body {
-            font-size: 1.1rem;
-        }
-
-        h3 {
-            font-size: 1.8rem;
-        }
-
-        /* Navbar adjustments */
-        .navbar-brand {
-            font-weight: bold;
-        }
-
-        /* Ensure the navbar is aligned with content */
-        .navbar-nav {
-            width: auto;
-        }
-
-        .navbar {
-            justify-content: space-between;
-            width: 100%;
-        }
-
-        /* Align navbar with content using the same container width */
-        .navbar .container {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 0 15px; /* Adds a bit of padding to prevent edge hugging */
-        }
-
-        /* Fix mobile menu layout to display vertically when collapsed */
-        @media (max-width: 991.98px) {
-            .navbar-collapse .navbar-nav {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                margin-left: 0 !important;
-            }
-            
-            .navbar-collapse .navbar-nav .nav-item {
-                margin-bottom: 10px;
-                width: 100%;
-            }
-            
-            .navbar-collapse .nav-link {
-                padding: 8px 0;
-            }
-        }
-
-        /* Desktop menu layout */
-        @media (min-width: 992px) {
-            .navbar .navbar-nav {
-                flex-direction: row;
-                align-items: center;
-            }
-            
-            .navbar-collapse .navbar-nav {
-                margin-left: 10px;
-            }
-            
-            .navbar .navbar-nav .nav-item {
-                margin-right: 15px;
-            }
-        }
-
-        /* Fix for bullets in content area, ensure they are inside */
-        ul {
-            padding-left: 20px; /* Indentation for the bullets */
-            margin-left: 0; /* Remove any negative margin */
-        }
-
-        /* Centered and well-spaced Quacker form */
-        .subscribe-container {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        /* Fix the left align of content and navbar */
-        .container-lg {
-            max-width: 960px;
-            margin-left: auto;
-            margin-right: auto;
-            padding-left: 15px;
-            padding-right: 15px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{sitePath "/css/custom.css"}}">
+    {{end}}
 </head>
 <body>
 
@@ -188,65 +90,18 @@ const htmlTemplate = `<!DOCTYPE html>
         </div>
     {{end}}
 
-    {{ if and .Config.Quacker (ne .Config.Quacker.Target "") }}
-    <div class="subscribe-container">
-        <form id="subscribe-form" action="https://{{.Config.Quacker.Target}}/subscribe" method="POST">
-            <input type="hidden" name="owner" value="{{.Config.Quacker.SiteOwner}}">
-            <input type="hidden" name="domain" value="{{.Config.Quacker.Domain}}">
-            <div class="d-flex justify-content-center align-items-center gap-2">
-                <input type="email" class="form-control form-control-sm w-auto" id="email" name="email" placeholder="email" required>
-                <button type="submit" class="btn btn-secondary btn-sm">Subscribe</button>
-            </div>
-        </form>
-        <div id="subscribe-message" class="mt-3"></div>
-    </div>
-
-    <script>
-    document.getElementById('subscribe-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        
-        var form = document.getElementById('subscribe-form');
-        var messageDiv = document.getElementById('subscribe-message');
-
-        form.classList.add('d-none');
-        messageDiv.innerHTML = '';
-
-        var formData = new FormData(form);
-        fetch(form.action, {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (response.ok) {
-                return response.text();
-            }
-            throw new Error('Subscription failed');
-        })
-        .then(message => {
-            messageDiv.innerHTML = '<div class="alert alert-success">' + message + '</div>';
-            setTimeout(() => {
-                messageDiv.innerHTML = '';  // Clear message
-                form.classList.remove('d-none');
-                form.reset();
-            }, 3000);
-        })
-        .catch(error => {
-            messageDiv.innerHTML = '<div class="alert alert-danger">' + error.message + '</div>';
-            setTimeout(() => {
-                messageDiv.innerHTML = '';  // Clear message
-                form.classList.remove('d-none');
-            }, 3000);
-        });
-    });
-    </script>
-    {{ end }}
-
     <footer class="text-center mt-5">
         Generated with <a href="https://github.com/mreider/krems">Krems</a>
     </footer>
 </div>
 
+{{if .AlternativeJSFiles}}
+    {{range .AlternativeJSFiles}}
+<script src="{{sitePath .}}"></script>
+    {{end}}
+{{else}}
 <script src="{{sitePath "/js/bootstrap.js"}}"></script>
+{{end}}
 </body>
 </html>
 `

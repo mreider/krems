@@ -15,10 +15,13 @@ type QuackerConfig struct {
 
 type Config struct {
 	Website struct {
-		URL      string `yaml:"url"`
-		Name     string `yaml:"name"`
-		BasePath string `yaml:"basePath,omitempty"` // Added BasePath
-		DevPath  string `yaml:"devPath,omitempty"`
+		URL                string `yaml:"url"`
+		Name               string `yaml:"name"`
+		BasePath           string `yaml:"basePath,omitempty"`
+		DevPath            string `yaml:"devPath,omitempty"`
+		AlternativeCSSDir  string `yaml:"alternativeCSSDir,omitempty"`
+		AlternativeJSDir   string `yaml:"alternativeJSDir,omitempty"`
+		AlternativeFavicon string `yaml:"alternativeFavicon,omitempty"`
 	} `yaml:"website"`
 	Menu []struct {
 		Title string `yaml:"title"`

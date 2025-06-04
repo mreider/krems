@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"embed" // Added embed here
-	"fmt"   // Added fmt here
+	"embed"
+	"fmt"
 )
 
 // Embed assets from a flat assets/ directory
@@ -23,6 +23,9 @@ var embeddedBootstrapJS embed.FS
 
 //go:embed assets/favicon.ico
 var embeddedFaviconICO embed.FS
+
+//go:embed assets/custom.css
+var embeddedCustomCSS embed.FS
 
 func createInternalCSS(outputBaseDir string) error {
 	cssDir := filepath.Join(outputBaseDir, "css")
@@ -49,6 +52,17 @@ func createInternalCSS(outputBaseDir string) error {
 		return fmt.Errorf("failed to write tiempos.woff2: %w", err)
 	}
 	fmt.Printf("Created internal: %s\n", filepath.Join(cssDir, "tiempos.woff2"))
+
+	customCSSData, err := fs.ReadFile(embeddedCustomCSS, "assets/custom.css")
+	if err != nil {
+		return fmt.Errorf("failed to read embedded custom.css: %w", err)
+	}
+	err = os.WriteFile(filepath.Join(cssDir, "custom.css"), customCSSData, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write custom.css: %w", err)
+	}
+	fmt.Printf("Created internal: %s\n", filepath.Join(cssDir, "custom.css"))
+
 	return nil
 }
 
@@ -90,13 +104,13 @@ func createInternalFavicon(outputBaseDir string) error {
 	return nil
 }
 
-func copyStaticAssets(outputDir string) error { // MODIFIED: Added outputDir parameter
+func copyStaticAssets(outputDir string) error {
 	// "css" is removed as it's handled by createInternalCSS
 	subdirs := []string{"js", "images"}
 	for _, sd := range subdirs {
 		// Source directly from root, e.g., "js", "images"
 		src := sd
-		dest := filepath.Join(outputDir, sd) // MODIFIED: Used outputDir
+		dest := filepath.Join(outputDir, sd)
 		if err := copyDir(src, dest); err != nil {
 			// skip if doesn't exist
 			var fsErr *fs.PathError

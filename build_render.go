@@ -15,7 +15,7 @@ import (
 	"github.com/gosimple/slug"
 )
 
-func processPages(cache *BuildCache, outputDirRoot string) error { // MODIFIED: Added outputDirRoot
+func processPages(cache *BuildCache, outputDirRoot string) error {
 	for _, p := range cache.Pages {
 		base := filepath.Base(p.RelPath)
 		if base == "index.md" {
@@ -29,13 +29,13 @@ func processPages(cache *BuildCache, outputDirRoot string) error { // MODIFIED: 
 		}
 
 		if p.IsIndex {
-			p.OutputDir = filepath.Join(outputDirRoot, dir) // MODIFIED: Used outputDirRoot
+			p.OutputDir = filepath.Join(outputDirRoot, dir)
 		} else {
 			slugTitle := slug.Make(p.FrontMatter.Title)
 			if slugTitle == "" {
 				slugTitle = strings.TrimSuffix(base, ".md")
 			}
-			p.OutputDir = filepath.Join(outputDirRoot, dir, slugTitle) // MODIFIED: Used outputDirRoot
+			p.OutputDir = filepath.Join(outputDirRoot, dir, slugTitle)
 		}
 	}
 
@@ -48,7 +48,6 @@ func processPages(cache *BuildCache, outputDirRoot string) error { // MODIFIED: 
 		htmlBytes := markdown.ToHTML(p.MarkdownContent, mdParser, nil)
 		p.HTMLContent = template.HTML(htmlBytes)
 
-		// MODIFIED: Pass outputDirRoot (as siteBuildRoot) to renderHTMLPage
 		if err := renderHTMLPage(cache, p, outputDirRoot); err != nil {
 			return err
 		}
@@ -56,7 +55,6 @@ func processPages(cache *BuildCache, outputDirRoot string) error { // MODIFIED: 
 	return nil
 }
 
-// MODIFIED: Added siteBuildRoot parameter
 func renderHTMLPage(cache *BuildCache, page *PageData, siteBuildRoot string) error {
 	if err := os.MkdirAll(page.OutputDir, 0755); err != nil {
 		return err
@@ -85,10 +83,12 @@ func renderHTMLPage(cache *BuildCache, page *PageData, siteBuildRoot string) err
 	}
 
 	data := struct {
-		Config      *Config
-		Page        *PageData
-		MenuItems   []string
-		MenuTargets []string
+		Config              *Config
+		Page                *PageData
+		MenuItems           []string
+		MenuTargets         []string
+		AlternativeCSSFiles []string
+		AlternativeJSFiles  []string
 	}{
 		Config:      cache.Config,
 		Page:        page,
@@ -96,8 +96,31 @@ func renderHTMLPage(cache *BuildCache, page *PageData, siteBuildRoot string) err
 		MenuTargets: menuTargets,
 	}
 
+	if cache.Config.Website.AlternativeCSSDir != "" {
+		files, err := os.ReadDir(cache.Config.Website.AlternativeCSSDir)
+		if err == nil { // Silently ignore errors here, build.go would have caught it
+			for _, file := range files {
+				if !file.IsDir() && filepath.Ext(file.Name()) == ".css" {
+					// Path for template should be relative to outputDir/css
+					data.AlternativeCSSFiles = append(data.AlternativeCSSFiles, "/css/"+file.Name())
+				}
+			}
+		}
+	}
+
+	if cache.Config.Website.AlternativeJSDir != "" {
+		files, err := os.ReadDir(cache.Config.Website.AlternativeJSDir)
+		if err == nil { // Silently ignore errors here, build.go would have caught it
+			for _, file := range files {
+				if !file.IsDir() && filepath.Ext(file.Name()) == ".js" {
+					// Path for template should be relative to outputDir/js
+					data.AlternativeJSFiles = append(data.AlternativeJSFiles, "/js/"+file.Name())
+				}
+			}
+		}
+	}
+
 	tmpl := template.New("page")
-	// MODIFIED: Pass siteBuildRoot to initTemplateFuncs
 	tmpl = initTemplateFuncs(tmpl, cache, siteBuildRoot)
 	tmpl, err = tmpl.Parse(htmlTemplate)
 	if err != nil {
@@ -116,7 +139,7 @@ func renderHTMLPage(cache *BuildCache, page *PageData, siteBuildRoot string) err
 }
 
 // generate RSS => outputDirRoot/rss.xml
-func generateRSS(cache *BuildCache, outputDirRoot string) error { // MODIFIED: Added outputDirRoot
+func generateRSS(cache *BuildCache, outputDirRoot string) error {
 	var dated []*PageData
 	for _, p := range cache.Pages {
 		if !p.FrontMatter.ParsedDate.IsZero() {
@@ -177,18 +200,18 @@ func generateRSS(cache *BuildCache, outputDirRoot string) error { // MODIFIED: A
 		escapeForXML(cache.Config.Website.Name),
 		strings.Join(items, "\n"))
 
-	rssPath := filepath.Join(outputDirRoot, "rss.xml") // MODIFIED: Used outputDirRoot
+	rssPath := filepath.Join(outputDirRoot, "rss.xml")
 	if err := os.WriteFile(rssPath, []byte(rss), 0644); err != nil {
 		return err
 	}
-	fmt.Printf("Generated: %s\n", rssPath) // MODIFIED
+	fmt.Printf("Generated: %s\n", rssPath)
 	return nil
 }
 
 // create 404.html => outputDirRoot/404.html
-func create404Page(cache *BuildCache, outputDirRoot string) error { // MODIFIED: Added outputDirRoot
-	_ = os.MkdirAll(outputDirRoot, 0755) // MODIFIED: Used outputDirRoot
-	f, err := os.Create(filepath.Join(outputDirRoot, "404.html")) // MODIFIED: Used outputDirRoot
+func create404Page(cache *BuildCache, outputDirRoot string) error {
+	_ = os.MkdirAll(outputDirRoot, 0755)
+	f, err := os.Create(filepath.Join(outputDirRoot, "404.html"))
 	if err != nil {
 		return err
 	}
@@ -198,9 +221,8 @@ func create404Page(cache *BuildCache, outputDirRoot string) error { // MODIFIED:
 		FrontMatter: PageFrontMatter{
 			Title: "404 Not Found",
 		},
-		// HTMLContent will be set after BasePath logic
-		RelPath:   "404.html", // This is fine, it's a pseudo path
-		OutputDir: outputDirRoot, // MODIFIED: Used outputDirRoot
+		RelPath:   "404.html",
+		OutputDir: outputDirRoot,
 	}
 
 	var homeLinkFor404Page string
@@ -231,15 +253,41 @@ func create404Page(cache *BuildCache, outputDirRoot string) error { // MODIFIED:
 	}
 
 	data := struct {
-		Config      *Config
-		Page        *PageData
-		MenuItems   []string
-		MenuTargets []string
+		Config              *Config
+		Page                *PageData
+		MenuItems           []string
+		MenuTargets         []string
+		AlternativeCSSFiles []string // For consistency, though 404 might not use them
+		AlternativeJSFiles  []string // For consistency
 	}{
 		Config:      cache.Config,
 		Page:        pseudo,
 		MenuItems:   menuItems,
 		MenuTargets: menuTargets,
+	}
+
+	// Populate alternative files for 404 page as well, for template consistency
+	// even if not strictly used by a minimal 404.
+	if cache.Config.Website.AlternativeCSSDir != "" {
+		files, err := os.ReadDir(cache.Config.Website.AlternativeCSSDir)
+		if err == nil {
+			for _, file := range files {
+				if !file.IsDir() && filepath.Ext(file.Name()) == ".css" {
+					data.AlternativeCSSFiles = append(data.AlternativeCSSFiles, "/css/"+file.Name())
+				}
+			}
+		}
+	}
+
+	if cache.Config.Website.AlternativeJSDir != "" {
+		files, err := os.ReadDir(cache.Config.Website.AlternativeJSDir)
+		if err == nil {
+			for _, file := range files {
+				if !file.IsDir() && filepath.Ext(file.Name()) == ".js" {
+					data.AlternativeJSFiles = append(data.AlternativeJSFiles, "/js/"+file.Name())
+				}
+			}
+		}
 	}
 
 	tmpl := template.New("404")
@@ -252,7 +300,7 @@ func create404Page(cache *BuildCache, outputDirRoot string) error { // MODIFIED:
 		return err
 	}
 
-	fmt.Printf("Generated: %s\n", filepath.Join(outputDirRoot, "404.html")) // MODIFIED
+	fmt.Printf("Generated: %s\n", filepath.Join(outputDirRoot, "404.html"))
 	return nil
 }
 
@@ -290,7 +338,7 @@ func trimPrefixSlash(s string) string {
 	return strings.TrimPrefix(s, "/")
 }
 
-func relativeToRoot(pageOutputDir, siteBuildRoot string) string { // MODIFIED: Added siteBuildRoot
+func relativeToRoot(pageOutputDir, siteBuildRoot string) string {
 	// Ensure siteBuildRoot is absolute or resolvable correctly with pageOutputDir
 	// For simplicity, assume both are absolute or consistently relative for Rel to work.
 	// If pageOutputDir is /tmp/build/foo and siteBuildRoot is /tmp/build, rel should be ".."

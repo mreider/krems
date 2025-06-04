@@ -27,6 +27,8 @@ Note: The config.yaml file contains my example URL, so links will redirect to th
 
 The example site shows all of the functionality of Krems. The stylesheet is fixed and generic for everyone. All Krems sites look the same. If you want to improve it, open a pull request and I can update it.
 
+If you want to change the CSS in a live view it's [here](https://codepen.io/matthew-reider/pen/dPoOebJ).
+
 Note: I'll be adding custom CSS soon.
 
 ## Images
