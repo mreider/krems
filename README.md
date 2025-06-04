@@ -25,11 +25,9 @@ Note: The config.yaml file contains my example URL, so links will redirect to th
 
 ## Learn from the example and build your own site
 
-The example site shows all of the functionality of Krems. The stylesheet is fixed and generic for everyone. All Krems sites look the same. If you want to improve it, open a pull request and I can update it.
+The example site shows all of the functionality of Krems. The default CSS works out-of-the-box. If you want to improve it, open a pull request back at the [Krems](https://github.com/mreider/krems) repository and I can update it.
 
-If you want to change the CSS in a live view it's [here](https://codepen.io/matthew-reider/pen/dPoOebJ).
-
-Note: I'll be adding custom CSS soon.
+See the config.yaml section (further down the readme) to see how to include your own CSS, JS, and Favicons. CSS must work with standard Bootstrap HTML classes, which you can see [here](https://codepen.io/matthew-reider/pen/dPoOebJ).
 
 ## Images
 
@@ -101,6 +99,7 @@ tags: ["about"]
 - required at root directory
 - must have `basePath` if home page is in a subdirectory
 - must have `devPath` to run locally without subdirectory
+- supports alternative CSS, JS, and favicon paths to override defaults
 - follows example below:
 
 ```
@@ -109,6 +108,9 @@ website:
   name: "Krems Example Site"
   basePath: "/krems-example"
   devPath: "/"
+  alternativeCSSDir: "path/to/your/css"      # Optional: Directory for your CSS files
+  alternativeJSDir: "path/to/your/js"        # Optional: Directory for your JS files
+  alternativeFavicon: "path/to/your/favicon.ico" # Optional: Path to your favicon file
 
 menu:
   - title: "Home"
