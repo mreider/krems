@@ -1,97 +1,308 @@
-/* Load custom font */
-        @font-face {
-            font-family: 'Tiempos';
-            src: url('{{sitePath "/css/tiempos.woff2"}}') format('woff2');
-            font-weight: normal;
-            font-style: normal;
-        }
+/* Load elegant fonts */
+@font-face {
+    font-family: 'Lora';
+    src: url('{{sitePath "/css/lora-regular.woff2"}}') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
 
-        /* Apply the custom font globally */
-        :root {
-            --bs-body-font-family: 'Tiempos', serif;
-        }
+@font-face {
+    font-family: 'Lora';
+    src: url('{{sitePath "/css/lora-italic.woff2"}}') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
 
-        /* Remove all background colors */
-        body, nav {
-            background-color: white !important;
-        }
+@font-face {
+    font-family: 'SourceSans';
+    src: url('{{sitePath "/css/source-sans-regular.woff2"}}') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
 
-        /* Adjust font sizes subtly */
-        body {
-            font-size: 1.1rem;
-        }
+/* Root variables for elegant typography */
+:root {
+    --serif-font: 'Lora', 'Times New Roman', serif;
+    --sans-font: 'SourceSans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --body-color: #2c3e50;
+    --heading-color: #1a252f;
+    --link-color: #3498db;
+    --link-hover-color: #2980b9;
+    --border-color: #ecf0f1;
+    --text-muted: #7f8c8d;
+    --max-width: 900px;
+    --content-spacing: 2rem;
+}
 
-        h3 {
-            font-size: 1.8rem;
-        }
+/* Global typography */
+body {
+    font-family: var(--serif-font);
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: var(--body-color);
+    background-color: #ffffff;
+    font-weight: 400;
+}
 
-        /* Navbar adjustments */
-        .navbar-brand {
-            font-weight: bold;
-        }
+/* Navigation uses sans-serif for clarity */
+.navbar {
+    font-family: var(--sans-font);
+    background-color: #ffffff !important;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 0;
+}
 
-        /* Ensure the navbar is aligned with content */
-        .navbar-nav {
-            width: auto;
-        }
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: var(--heading-color) !important;
+    letter-spacing: -0.02em;
+}
 
-        .navbar {
-            justify-content: space-between;
-            width: 100%;
-        }
+.navbar-nav .nav-link {
+    font-weight: 500;
+    color: var(--body-color) !important;
+    padding: 0.5rem 1rem !important;
+    transition: color 0.2s ease;
+}
 
-        /* Align navbar with content using the same container width */
-        .navbar .container {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 0 15px; /* Adds a bit of padding to prevent edge hugging */
-        }
+.navbar-nav .nav-link:hover {
+    color: var(--link-color) !important;
+}
 
-        /* Fix mobile menu layout to display vertically when collapsed */
-        @media (max-width: 991.98px) {
-            .navbar-collapse .navbar-nav {
-                flex-direction: column !important;
-                align-items: flex-start !important;
-                margin-left: 0 !important;
-            }
-            
-            .navbar-collapse .navbar-nav .nav-item {
-                margin-bottom: 10px;
-                width: 100%;
-            }
-            
-            .navbar-collapse .nav-link {
-                padding: 8px 0;
-            }
-        }
+/* Container and layout */
+.container-lg {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
 
-        /* Desktop menu layout */
-        @media (min-width: 992px) {
-            .navbar .navbar-nav {
-                flex-direction: row;
-                align-items: center;
-            }
-            
-            .navbar-collapse .navbar-nav {
-                margin-left: 10px;
-            }
-            
-            .navbar .navbar-nav .nav-item {
-                margin-right: 15px;
-            }
-        }
+.navbar .container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
 
-        /* Fix for bullets in content area, ensure they are inside */
-        ul {
-            padding-left: 20px; /* Indentation for the bullets */
-            margin-left: 0; /* Remove any negative margin */
-        }
+/* Headings with elegant typography */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--serif-font);
+    color: var(--heading-color);
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+}
 
-        /* Fix the left align of content and navbar */
-        .container-lg {
-            max-width: 960px;
-            margin-left: auto;
-            margin-right: auto;
-            padding-left: 15px;
-            padding-right: 15px;
-        }
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+}
+
+h2 {
+    font-size: 2rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1.25rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+h4 {
+    font-size: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+/* Content spacing and typography */
+.content {
+    margin-top: var(--content-spacing);
+    margin-bottom: var(--content-spacing);
+}
+
+p {
+    margin-bottom: 1.25rem;
+    orphans: 3;
+    widows: 3;
+}
+
+/* Links with elegant styling */
+a {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--link-hover-color);
+    text-decoration: underline;
+}
+
+/* Lists with proper spacing */
+ul, ol {
+    margin-bottom: 1.25rem;
+    padding-left: 1.25rem;
+}
+
+li {
+    margin-bottom: 0.5rem;
+}
+
+/* Blockquotes */
+blockquote {
+    font-style: italic;
+    border-left: 4px solid var(--border-color);
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+/* Code styling */
+code {
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-size: 0.9em;
+    background-color: #f8f9fa;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    color: #e83e8c;
+}
+
+pre {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color);
+}
+
+pre code {
+    background-color: transparent;
+    padding: 0;
+    color: inherit;
+}
+
+/* Images */
+img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+/* Responsive design */
+@media (max-width: 991.98px) {
+    body {
+        font-size: 1rem;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    h2 {
+        font-size: 1.75rem;
+        margin-top: 2rem;
+    }
+
+    h3 {
+        font-size: 1.375rem;
+    }
+
+    .container-lg,
+    .navbar .container {
+        padding: 0 1rem;
+    }
+
+    :root {
+        --content-spacing: 1.5rem;
+    }
+
+    /* Mobile navigation */
+    .navbar-collapse .navbar-nav {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        margin-top: 1rem;
+    }
+
+    .navbar-collapse .navbar-nav .nav-item {
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+
+    .navbar-collapse .nav-link {
+        padding: 0.75rem 0 !important;
+    }
+}
+
+@media (max-width: 576px) {
+    body {
+        font-size: 0.95rem;
+    }
+
+    h1 {
+        font-size: 1.75rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    .container-lg,
+    .navbar .container {
+        padding: 0 0.75rem;
+    }
+
+    ul, ol {
+        padding-left: 1.25rem;
+    }
+
+    blockquote {
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+    }
+}
+
+/* Desktop menu layout */
+@media (min-width: 992px) {
+    .navbar .navbar-nav {
+        flex-direction: row;
+        align-items: center;
+        margin-left: 2rem;
+    }
+
+    .navbar .navbar-nav .nav-item {
+        margin-right: 0.5rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    body {
+        font-size: 12pt;
+        line-height: 1.4;
+        color: #000;
+    }
+
+    .navbar {
+        display: none;
+    }
+
+    a {
+        color: #000;
+        text-decoration: underline;
+    }
+
+    h1, h2, h3 {
+        break-after: avoid;
+    }
+}

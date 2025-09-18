@@ -110,9 +110,13 @@ func (l *loggingFileHandler) notFound(lrw *loggingResponseWriter, r *http.Reques
 type loggingResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
+	written    bool
 }
 
 func (lrw *loggingResponseWriter) WriteHeader(code int) {
-	lrw.statusCode = code
-	lrw.ResponseWriter.WriteHeader(code)
+	if !lrw.written {
+		lrw.statusCode = code
+		lrw.ResponseWriter.WriteHeader(code)
+		lrw.written = true
+	}
 }

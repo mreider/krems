@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"io/fs"
@@ -9,14 +10,21 @@ import (
 	"strings"
 	"embed"
 	"fmt"
+	"text/template"
 )
 
 // Embed assets from a flat assets/ directory
 //go:embed assets/bootstrap.min.css
 var embeddedBootstrapCSS embed.FS
 
-//go:embed assets/tiempos.woff2
-var embeddedTiemposFont embed.FS
+//go:embed assets/lora-regular.woff2
+var embeddedLoraRegularFont embed.FS
+
+//go:embed assets/lora-italic.woff2
+var embeddedLoraItalicFont embed.FS
+
+//go:embed assets/source-sans-regular.woff2
+var embeddedSourceSansFont embed.FS
 
 //go:embed assets/bootstrap.js
 var embeddedBootstrapJS embed.FS
@@ -43,21 +51,51 @@ func createInternalCSS(outputBaseDir string) error {
 	}
 	fmt.Printf("Created internal: %s\n", filepath.Join(cssDir, "bootstrap.min.css"))
 
-	tiemposData, err := fs.ReadFile(embeddedTiemposFont, "assets/tiempos.woff2")
+	// Lora regular font
+	loraRegularData, err := fs.ReadFile(embeddedLoraRegularFont, "assets/lora-regular.woff2")
 	if err != nil {
-		return fmt.Errorf("failed to read embedded tiempos.woff2: %w", err)
+		return fmt.Errorf("failed to read embedded lora-regular.woff2: %w", err)
 	}
-	err = os.WriteFile(filepath.Join(cssDir, "tiempos.woff2"), tiemposData, 0644)
+	err = os.WriteFile(filepath.Join(cssDir, "lora-regular.woff2"), loraRegularData, 0644)
 	if err != nil {
-		return fmt.Errorf("failed to write tiempos.woff2: %w", err)
+		return fmt.Errorf("failed to write lora-regular.woff2: %w", err)
 	}
-	fmt.Printf("Created internal: %s\n", filepath.Join(cssDir, "tiempos.woff2"))
+	fmt.Printf("Created internal: %s\n", filepath.Join(cssDir, "lora-regular.woff2"))
+
+	// Lora italic font
+	loraItalicData, err := fs.ReadFile(embeddedLoraItalicFont, "assets/lora-italic.woff2")
+	if err != nil {
+		return fmt.Errorf("failed to read embedded lora-italic.woff2: %w", err)
+	}
+	err = os.WriteFile(filepath.Join(cssDir, "lora-italic.woff2"), loraItalicData, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write lora-italic.woff2: %w", err)
+	}
+	fmt.Printf("Created internal: %s\n", filepath.Join(cssDir, "lora-italic.woff2"))
+
+	// Source Sans font
+	sourceSansData, err := fs.ReadFile(embeddedSourceSansFont, "assets/source-sans-regular.woff2")
+	if err != nil {
+		return fmt.Errorf("failed to read embedded source-sans-regular.woff2: %w", err)
+	}
+	err = os.WriteFile(filepath.Join(cssDir, "source-sans-regular.woff2"), sourceSansData, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write source-sans-regular.woff2: %w", err)
+	}
+	fmt.Printf("Created internal: %s\n", filepath.Join(cssDir, "source-sans-regular.woff2"))
 
 	customCSSData, err := fs.ReadFile(embeddedCustomCSS, "assets/custom.css")
 	if err != nil {
 		return fmt.Errorf("failed to read embedded custom.css: %w", err)
 	}
-	err = os.WriteFile(filepath.Join(cssDir, "custom.css"), customCSSData, 0644)
+
+	// Process CSS through template engine to resolve sitePath functions
+	processedCSS, err := processCSSThroughTemplate(string(customCSSData))
+	if err != nil {
+		return fmt.Errorf("failed to process custom.css through template: %w", err)
+	}
+
+	err = os.WriteFile(filepath.Join(cssDir, "custom.css"), []byte(processedCSS), 0644)
 	if err != nil {
 		return fmt.Errorf("failed to write custom.css: %w", err)
 	}
@@ -155,4 +193,28 @@ func copyFile(src, dest string) error {
 
 	_, err = io.Copy(out, in)
 	return err
+}
+
+// processCSSThroughTemplate processes CSS content through the template engine
+// to resolve sitePath and other template functions
+func processCSSThroughTemplate(cssContent string) (string, error) {
+	// Create a new template with the same functions as the HTML template
+	tmpl := template.New("css").Funcs(template.FuncMap{
+		"sitePath": sitePath,
+	})
+
+	// Parse the CSS as a template
+	_, err := tmpl.Parse(cssContent)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse CSS template: %w", err)
+	}
+
+	// Execute the template to resolve the sitePath functions
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute CSS template: %w", err)
+	}
+
+	return buf.String(), nil
 }
