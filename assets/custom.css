@@ -285,6 +285,63 @@ img {
     }
 }
 
+/* Tag styling */
+.tag-link {
+    text-decoration: none !important;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+}
+
+.tag-link:hover {
+    text-decoration: none !important;
+}
+
+.tag-badge {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: var(--sans-font);
+    color: #ffffff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    transition: all 0.2s ease;
+    border: none;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+    letter-spacing: 0.02em;
+}
+
+.tag-link:hover .tag-badge {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    color: #ffffff;
+}
+
+/* Alternative single color version */
+.tag-badge-simple {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    font-family: var(--sans-font);
+    color: #ffffff;
+    background-color: var(--link-color);
+    border-radius: 20px;
+    transition: all 0.2s ease;
+    border: none;
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2);
+    letter-spacing: 0.02em;
+}
+
+.tag-link:hover .tag-badge-simple {
+    background-color: var(--link-hover-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+    color: #ffffff;
+}
+
 /* Print styles */
 @media print {
     body {
@@ -304,5 +361,11 @@ img {
 
     h1, h2, h3 {
         break-after: avoid;
+    }
+
+    .tag-badge, .tag-badge-simple {
+        background-color: #000 !important;
+        color: #fff !important;
+        box-shadow: none !important;
     }
 }

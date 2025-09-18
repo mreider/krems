@@ -125,7 +125,7 @@ func tagsLine(tags []string) template.HTML {
 	for _, tag := range tags {
 		tagSlug := slug.Make(tag)
 		// Note: sitePath expects paths like "/tags/..."
-		tagLinks = append(tagLinks, fmt.Sprintf(`<a href="%s"><span class="badge bg-secondary">%s</span></a>`, sitePath("/tags/"+tagSlug+"/"), tag))
+		tagLinks = append(tagLinks, fmt.Sprintf(`<a href="%s" class="tag-link"><span class="tag-badge">%s</span></a>`, sitePath("/tags/"+tagSlug+"/"), tag))
 	}
 	return template.HTML(strings.Join(tagLinks, " "))
 }

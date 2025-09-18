@@ -135,7 +135,7 @@ func listPagesInDirectory(relPath string) template.HTML {
 					for _, tag := range art.FrontMatter.Tags {
 						tagSlug := slug.Make(tag)
 						tagLinkPath := "/tags/" + tagSlug + "/"
-						tagLinks = append(tagLinks, fmt.Sprintf(`<a href="%s"><span class="badge bg-secondary">%s</span></a>`, sitePath(tagLinkPath), tag))
+						tagLinks = append(tagLinks, fmt.Sprintf(`<a href="%s" class="tag-link"><span class="tag-badge">%s</span></a>`, sitePath(tagLinkPath), tag))
 					}
 					tagsText = strings.Join(tagLinks, " ")
 				}
